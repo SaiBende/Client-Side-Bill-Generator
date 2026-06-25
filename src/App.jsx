@@ -220,22 +220,26 @@ function App() {
             <IndianRupee className="w-6 h-6 text-blue-600" />
             <h1 className="text-lg font-bold text-gray-800">Invoice Generator</h1>
           </div>
-          <div className="flex gap-2">
-            <button onClick={downloadPDF} disabled={generating}
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors">
-              <Download className="w-4 h-4" /> {generating ? 'Generating...' : 'Download PDF'}
+          <div className="flex gap-2 flex-wrap justify-end">
+            <button onClick={downloadPDF} disabled={generating} aria-label="Download PDF"
+              className="flex items-center gap-1.5 px-2 md:px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors">
+              <Download className="w-4 h-4 shrink-0" />
+              <span className="hidden md:inline">{generating ? 'Generating...' : 'Download PDF'}</span>
             </button>
-            <button onClick={sharePDF} disabled={generating}
-              className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">
-              <Share2 className="w-4 h-4" /> Share
+            <button onClick={sharePDF} disabled={generating} aria-label="Share"
+              className="flex items-center gap-1.5 px-2 md:px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">
+              <Share2 className="w-4 h-4 shrink-0" />
+              <span className="hidden md:inline">Share</span>
             </button>
-            <button onClick={shareImage} disabled={generating}
-              className="flex items-center gap-1.5 px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 disabled:opacity-50 transition-colors">
-              <Image className="w-4 h-4" /> Share Img
+            <button onClick={shareImage} disabled={generating} aria-label="Share Image"
+              className="flex items-center gap-1.5 px-2 md:px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 disabled:opacity-50 transition-colors">
+              <Image className="w-4 h-4 shrink-0" />
+              <span className="hidden md:inline">Share Img</span>
             </button>
-            <button onClick={downloadBlankPDF} disabled={generating}
-              className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors">
-              <FileDown className="w-4 h-4" /> Blank Bill
+            <button onClick={downloadBlankPDF} disabled={generating} aria-label="Blank Bill"
+              className="flex items-center gap-1.5 px-2 md:px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors">
+              <FileDown className="w-4 h-4 shrink-0" />
+              <span className="hidden md:inline">Blank Bill</span>
             </button>
           </div>
         </div>

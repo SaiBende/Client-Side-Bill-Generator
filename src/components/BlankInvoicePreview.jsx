@@ -5,7 +5,7 @@ export default function BlankInvoicePreview({ businessPhone, businessEmail }) {
     <div className="bg-white border border-gray-300 text-xs">
       <div className="p-6">
         <div className="text-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900 uppercase">Shri Raj Garware Hitech Films and Decors</h2>
+          <h2 className="text-lg md:text-xl font-bold text-gray-900 uppercase break-words">Shri Raj Garware Hitech Films and Decors</h2>
           <p className="text-gray-600 mt-1 whitespace-pre">Opp. Ayurvedic College, Vazirabad, Nanded - 431605</p>
           <div className="mt-1 text-gray-600">
             {businessPhone && <>Phone: {businessPhone}<br /></>}
@@ -15,7 +15,7 @@ export default function BlankInvoicePreview({ businessPhone, businessEmail }) {
 
         <hr className="border-t-2 border-gray-900 my-3" />
 
-        <div className="flex justify-between gap-4 mb-4">
+        <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
           <div className="border border-gray-300 p-3 rounded flex-1 min-h-[80px]">
             <h3 className="font-bold text-gray-900 mb-1 text-sm">Bill To:</h3>
             <div className="space-y-2">
@@ -24,7 +24,7 @@ export default function BlankInvoicePreview({ businessPhone, businessEmail }) {
               <div className="border-b border-dotted border-gray-400 h-5" />
             </div>
           </div>
-          <div className="border border-gray-300 p-3 rounded min-w-[180px]">
+          <div className="border border-gray-300 p-3 rounded min-w-0 md:min-w-[180px]">
             <div className="grid grid-cols-2 gap-x-3 gap-y-3">
               <span className="font-semibold text-gray-700">Invoice No:</span>
               <span className="border-b border-dotted border-gray-400 h-4" />
@@ -36,6 +36,7 @@ export default function BlankInvoicePreview({ businessPhone, businessEmail }) {
           </div>
         </div>
 
+        <div className="overflow-x-auto -mx-2 px-2">
         <table className="w-full border-collapse mb-4">
           <thead>
             <tr className="bg-gray-900 text-white">
@@ -58,9 +59,10 @@ export default function BlankInvoicePreview({ businessPhone, businessEmail }) {
             ))}
           </tbody>
         </table>
+        </div>
 
         <div className="flex justify-end mb-4">
-          <div className="w-64">
+          <div className="w-full md:w-64">
             <div className="flex justify-between py-1.5 text-sm">
               <span className="font-semibold text-gray-700">Subtotal:</span>
               <div className="border-b border-dotted border-gray-400 h-4 w-24" />
@@ -82,7 +84,7 @@ export default function BlankInvoicePreview({ businessPhone, businessEmail }) {
           <span className="border-b border-dotted border-gray-400 inline-block min-w-[300px] h-4" />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <h3 className="font-bold text-gray-900 mb-1 text-sm">Bank Details:</h3>
             <div className="space-y-2">

@@ -5,7 +5,7 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, numberToWords }
     <div className="bg-white shadow-lg border border-gray-300 rounded-lg overflow-hidden text-xs">
       <div className="p-6">
         <div className="text-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900 uppercase">Shri Raj Garware Hitech Films and Decors</h2>
+          <h2 className="text-lg md:text-xl font-bold text-gray-900 uppercase break-words">Shri Raj Garware Hitech Films and Decors</h2>
           <p className="text-gray-600 mt-1 leading-relaxed whitespace-pre" style={{ wordSpacing: '2px' }}>Opp. Ayurvedic College, Vazirabad, Nanded - 431605</p>
           <div className="mt-1 text-gray-600">
             {invoice.businessPhone && <>Phone: {invoice.businessPhone}<br /></>}
@@ -15,19 +15,19 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, numberToWords }
 
         <hr className="border-t-2 border-gray-900 my-3" />
 
-        <div className="flex justify-between gap-4 mb-4">
+        <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
           <div className="border border-gray-300 p-3 rounded flex-1">
             <h3 className="font-bold text-gray-900 mb-1 text-sm">Bill To:</h3>
-            <p className="font-semibold text-gray-800">{invoice.customerName || 'Customer Name'}</p>
-            <p className="text-gray-600">
+            <p className="font-semibold text-gray-800 break-words">{invoice.customerName || 'Customer Name'}</p>
+            <p className="text-gray-600 break-words">
               {invoice.customerAddress && <>{invoice.customerAddress}<br /></>}
               {[invoice.customerCity, invoice.customerState, invoice.customerPincode].filter(Boolean).join(', ')}
             </p>
           </div>
-          <div className="border border-gray-300 p-3 rounded min-w-[180px]">
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <div className="border border-gray-300 p-3 rounded min-w-0 md:min-w-[180px]">
+            <div className="grid grid-cols-2 gap-x-2 md:gap-x-3 gap-y-1">
               <span className="font-semibold text-gray-700">Invoice No:</span>
-              <span className="text-gray-800 text-right">{invoice.invoiceNumber}</span>
+              <span className="text-gray-800 text-right break-all">{invoice.invoiceNumber}</span>
               <span className="font-semibold text-gray-700">Date:</span>
               <span className="text-gray-800 text-right">{invoice.invoiceDate}</span>
               {invoice.dueDate && <>
@@ -38,6 +38,7 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, numberToWords }
           </div>
         </div>
 
+        <div className="overflow-x-auto -mx-2 px-2">
         <table className="w-full border-collapse mb-4">
           <thead>
             <tr className="bg-gray-900 text-white">
@@ -65,9 +66,10 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, numberToWords }
             )}
           </tbody>
         </table>
+        </div>
 
         <div className="flex justify-end mb-4">
-          <div className="w-64">
+          <div className="w-full md:w-64">
             <div className="flex justify-between py-1.5 text-sm">
               <span className="font-semibold text-gray-700">Subtotal:</span>
               <span className="text-gray-800">₹{calcSubtotal().toFixed(2)}</span>
@@ -91,7 +93,7 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, numberToWords }
           <span className="text-gray-800">{numberToWords(grandTotal)}</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <h3 className="font-bold text-gray-900 mb-1 text-sm">Bank Details:</h3>
             <p className="text-gray-700 leading-relaxed">

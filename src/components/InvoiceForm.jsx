@@ -105,7 +105,7 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem }) 
               <input value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} placeholder="Item description"
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" />
             </Field>
-            <div className="grid grid-cols-3 gap-2 mt-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
               <Field label="Qty">
                 <Input value={item.quantity} onChange={e => updateItem(index, 'quantity', Number(e.target.value))} type="number" min="1" />
               </Field>
