@@ -37,8 +37,8 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem }) 
     <div className="space-y-4">
       <Section icon={Building2} title="Business">
         <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-          <h3 className="font-bold text-gray-900 text-sm">Shri Raj Garware Hitech Films and Decors</h3>
-          <p className="text-gray-600 text-sm mt-1">Opp. Ayurvedic College, Vazirabad, Nanded - 431605</p>
+          <h3 className="font-bold text-gray-900 text-sm">Shri Raj Decors</h3>
+          <p className="text-gray-600 text-sm mt-1">Vazirabad, Nanded - 431605</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Phone">

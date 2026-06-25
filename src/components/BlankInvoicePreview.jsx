@@ -5,8 +5,8 @@ export default function BlankInvoicePreview({ businessPhone, businessEmail }) {
     <div className="bg-white border border-gray-300 text-[10px]">
       <div className="p-4">
         <div className="text-center mb-2">
-          <h2 className="text-base font-bold text-gray-900 uppercase break-words">Shri Raj Garware Hitech Films and Decors</h2>
-          <p className="text-gray-600 whitespace-pre">Opp. Ayurvedic College, Vazirabad, Nanded - 431605</p>
+          <h2 className="text-base font-bold text-gray-900 uppercase break-words">Shri Raj Decors</h2>
+          <p className="text-gray-600 whitespace-pre">Vazirabad, Nanded - 431605</p>
           <div className="text-gray-600">
             {businessPhone && <>Phone: {businessPhone}<br /></>}
             {businessEmail && <>Email: {businessEmail}</>}
@@ -100,7 +100,7 @@ export default function BlankInvoicePreview({ businessPhone, businessEmail }) {
               <div className="border-b border-dotted border-gray-400 h-3 w-3/4 ml-auto" />
             </div>
             <div className="mt-3 pt-1.5 border-t border-gray-300">
-              <p className="font-semibold text-gray-800 text-[11px]">for Shri Raj Garware Hitech Films and Decors</p>
+              <p className="font-semibold text-gray-800 text-[11px]">for Shri Raj Decors</p>
               <div className="h-8" />
               <div className="border-b border-dotted border-gray-400 h-3 w-28 ml-auto" />
               <p className="text-gray-600 text-[10px] mt-0.5">Authorized Signatory</p>

@@ -5,8 +5,8 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, numberToWords }
     <div className="bg-white shadow-lg border border-gray-300 rounded-lg overflow-hidden text-xs">
       <div className="p-6">
         <div className="text-center mb-4">
-          <h2 className="text-lg md:text-xl font-bold text-gray-900 uppercase break-words">Shri Raj Garware Hitech Films and Decors</h2>
-          <p className="text-gray-600 mt-1 leading-relaxed whitespace-pre" style={{ wordSpacing: '2px' }}>Opp. Ayurvedic College, Vazirabad, Nanded - 431605</p>
+          <h2 className="text-lg md:text-xl font-bold text-gray-900 uppercase break-words">Shri Raj Decors</h2>
+          <p className="text-gray-600 mt-1 leading-relaxed whitespace-pre" style={{ wordSpacing: '2px' }}>Vazirabad, Nanded - 431605</p>
           <div className="mt-1 text-gray-600">
             {invoice.businessPhone && <>Phone: {invoice.businessPhone}<br /></>}
             {invoice.businessEmail && <>Email: {invoice.businessEmail}</>}
@@ -109,7 +109,7 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, numberToWords }
             <p className="text-gray-700 text-xs whitespace-pre-line">{invoice.terms || 'N/A'}</p>
             {invoice.signature && (
               <div className="mt-4 pt-2 border-t border-gray-300">
-                <p className="font-semibold text-gray-800">for Shri Raj Garware Hitech Films and Decors</p>
+                <p className="font-semibold text-gray-800">for Shri Raj Decors</p>
                 <div className="h-10" />
                 <p className="font-semibold text-gray-800">({invoice.signature})</p>
                 <p className="text-gray-600 text-xs">Authorized Signatory</p>
