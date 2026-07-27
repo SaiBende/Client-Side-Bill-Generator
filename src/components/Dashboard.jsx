@@ -64,6 +64,7 @@ export default function Dashboard({ user, onSignOut, onNewInvoice, onEditInvoice
     const { data, error } = await supabase
       .from('invoices')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     if (!error) setInvoices(data || [])
     setLoading(false)

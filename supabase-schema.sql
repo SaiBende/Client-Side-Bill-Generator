@@ -81,10 +81,8 @@ CREATE POLICY "Users can delete own invoices"
   ON invoices FOR DELETE
   USING (auth.uid() = user_id);
 
--- Anyone can view an invoice by share_token (public links)
-CREATE POLICY "Anyone can view shared invoices"
-  ON invoices FOR SELECT
-  USING (share_token IS NOT NULL);
+-- Public shared access uses the get_shared_invoice(token) RPC function (see supabase-rls-fix.sql)
+-- This avoids the OR-combination problem with RLS policies
 
 -- Auto-update updated_at on row change
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -130,3 +128,12 @@ CREATE POLICY "Users can insert own profile"
 CREATE POLICY "Users can update own profile"
   ON user_profiles FOR UPDATE
   USING (auth.uid() = user_id);
+
+-- Secure RPC for public shared invoice access (avoids RLS OR-combination issue)
+CREATE OR REPLACE FUNCTION get_shared_invoice(token UUID)
+RETURNS SETOF invoices
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT * FROM invoices WHERE share_token = token;
+$$;

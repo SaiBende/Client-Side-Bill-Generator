@@ -50,7 +50,7 @@ function SharedInvoiceView({ token, onClose }) {
   const [qrDataUrl, setQrDataUrl] = useState(null)
 
   useEffect(() => {
-    supabase.from('invoices').select('*').eq('share_token', token).single().then(({ data }) => {
+    supabase.rpc('get_shared_invoice', { token }).single().then(({ data }) => {
       if (data) setInvoice(data)
       else setError(true)
       setLoading(false)
