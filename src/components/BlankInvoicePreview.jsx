@@ -1,12 +1,12 @@
-export default function BlankInvoicePreview({ businessPhone, businessEmail }) {
+export default function BlankInvoicePreview({ businessName, businessAddress, businessPhone, businessEmail }) {
   const rows = Array.from({ length: 5 }, (_, i) => i)
 
   return (
     <div className="bg-white border border-gray-300 text-[10px]">
       <div className="p-4">
         <div className="text-center mb-2">
-          <h2 className="text-base font-bold text-gray-900 uppercase break-words">Shri Raj Decors</h2>
-          <p className="text-gray-600 whitespace-pre">Vazirabad, Nanded - 431605</p>
+          <h2 className="text-base font-bold text-gray-900 uppercase break-words">{businessName || 'Your Business Name'}</h2>
+          <p className="text-gray-600 whitespace-pre">{businessAddress || 'Your Address'}</p>
           <div className="text-gray-600">
             {businessPhone && <>Phone: {businessPhone}<br /></>}
             {businessEmail && <>Email: {businessEmail}</>}

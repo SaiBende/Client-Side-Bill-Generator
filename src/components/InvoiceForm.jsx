@@ -36,10 +36,13 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem }) 
   return (
     <div className="space-y-4">
       <Section icon={Building2} title="Business">
-        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-          <h3 className="font-bold text-gray-900 text-sm">Shri Raj Decors</h3>
-          <p className="text-gray-600 text-sm mt-1">Vazirabad, Nanded - 431605</p>
-        </div>
+        <Field label="Business Name" required>
+          <Input value={invoice.businessName} onChange={e => updateField('businessName', e.target.value)} placeholder="Your Business Name" />
+        </Field>
+        <Field label="Address">
+          <textarea value={invoice.businessAddress} onChange={e => updateField('businessAddress', e.target.value)} placeholder="Street, Area, City, State, Pincode"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none" rows="2" />
+        </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Phone">
             <Input value={invoice.businessPhone} onChange={e => updateField('businessPhone', e.target.value)} placeholder="Phone Number" />
@@ -87,6 +90,19 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem }) 
             <Input value={invoice.dueDate} onChange={e => updateField('dueDate', e.target.value)} type="date" />
           </Field>
         </div>
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <span className="text-sm font-medium text-gray-700">Enable GST</span>
+          <button onClick={() => updateField('enableGst', !invoice.enableGst)}
+            className={`relative w-10 h-5 rounded-full transition-colors ${invoice.enableGst ? 'bg-blue-600' : 'bg-gray-300'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${invoice.enableGst ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+        {invoice.enableGst && (
+          <Field label="GSTIN">
+            <Input value={invoice.gstin} onChange={e => updateField('gstin', e.target.value)} placeholder="22AAAAA0000A1Z5" />
+          </Field>
+        )}
       </Section>
 
       <Section icon={ScrollText} title="Items">
@@ -105,6 +121,24 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem }) 
               <input value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} placeholder="Item description"
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" />
             </Field>
+            {invoice.enableGst && (
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <Field label="HSN/SAC">
+                  <Input value={item.hsn || ''} onChange={e => updateItem(index, 'hsn', e.target.value)} placeholder="HSN Code" />
+                </Field>
+                <Field label="GST Rate">
+                  <select value={item.gstRate || 0} onChange={e => updateItem(index, 'gstRate', Number(e.target.value))}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  >
+                    <option value={0}>0%</option>
+                    <option value={5}>5%</option>
+                    <option value={12}>12%</option>
+                    <option value={18}>18%</option>
+                    <option value={28}>28%</option>
+                  </select>
+                </Field>
+              </div>
+            )}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
               <Field label="Qty">
                 <Input value={item.quantity} onChange={e => updateItem(index, 'quantity', Number(e.target.value))} type="number" min="1" />
@@ -142,19 +176,31 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem }) 
         </div>
       </Section>
 
-      <Section icon={Banknote} title="Bank Details">
-        <Field label="Bank Name">
-          <Input value={invoice.bankName} onChange={e => updateField('bankName', e.target.value)} placeholder="Bank Name" />
-        </Field>
-        <Field label="Account Number">
-          <Input value={invoice.bankAccount} onChange={e => updateField('bankAccount', e.target.value)} placeholder="Account Number" />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="IFSC Code">
-            <Input value={invoice.bankIfsc} onChange={e => updateField('bankIfsc', e.target.value)} placeholder="IFSC0012345" />
+      <Section icon={Banknote} title="Payment Details">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+          <h3 className="text-sm font-semibold text-blue-800 mb-2">🏦 Bank Transfer</h3>
+          <Field label="Bank Name">
+            <Input value={invoice.bankName} onChange={e => updateField('bankName', e.target.value)} placeholder="Bank Name" />
           </Field>
-          <Field label="Branch">
-            <Input value={invoice.bankBranch} onChange={e => updateField('bankBranch', e.target.value)} placeholder="Branch Name" />
+          <Field label="Account Number">
+            <Input value={invoice.bankAccount} onChange={e => updateField('bankAccount', e.target.value)} placeholder="Account Number" />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="IFSC Code">
+              <Input value={invoice.bankIfsc} onChange={e => updateField('bankIfsc', e.target.value)} placeholder="IFSC0012345" />
+            </Field>
+            <Field label="Branch">
+              <Input value={invoice.bankBranch} onChange={e => updateField('bankBranch', e.target.value)} placeholder="Branch Name" />
+            </Field>
+          </div>
+        </div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <h3 className="text-sm font-semibold text-green-800 mb-2">📱 UPI Payment</h3>
+          <Field label="UPI ID">
+            <Input value={invoice.upiId} onChange={e => updateField('upiId', e.target.value)} placeholder="example@paytm / example@upi" />
+          </Field>
+          <Field label="UPI Payee Name">
+            <Input value={invoice.upiName} onChange={e => updateField('upiName', e.target.value)} placeholder="Name on UPI" />
           </Field>
         </div>
       </Section>
