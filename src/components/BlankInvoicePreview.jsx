@@ -1,10 +1,16 @@
-export default function BlankInvoicePreview({ businessName, businessAddress, businessPhone, businessEmail }) {
+export default function BlankInvoicePreview({ businessName, businessAddress, businessPhone, businessEmail, logo, logoSettings }) {
   const rows = Array.from({ length: 5 }, (_, i) => i)
+  const style = logoSettings || { position: 'center', width: 80, height: 80 }
 
   return (
     <div className="bg-white border border-gray-300 text-[10px]">
       <div className="p-4">
         <div className="text-center mb-2">
+          {logo && (
+            <div className={`flex mb-2 ${style.position === 'left' ? 'justify-start' : style.position === 'right' ? 'justify-end' : 'justify-center'}`}>
+              <img src={logo} alt="Business Logo" className="object-contain" style={{ width: style.width, height: style.height }} />
+            </div>
+          )}
           <h2 className="text-base font-bold text-gray-900 uppercase break-words">{businessName || 'Your Business Name'}</h2>
           <p className="text-gray-600 whitespace-pre">{businessAddress || 'Your Address'}</p>
           <div className="text-gray-600">
@@ -100,7 +106,7 @@ export default function BlankInvoicePreview({ businessName, businessAddress, bus
               <div className="border-b border-dotted border-gray-400 h-3 w-3/4 ml-auto" />
             </div>
             <div className="mt-3 pt-1.5 border-t border-gray-300">
-              <p className="font-semibold text-gray-800 text-[11px]">for Shri Raj Decors</p>
+              <p className="font-semibold text-gray-800 text-[11px]">for {businessName || 'Your Business Name'}</p>
               <div className="h-8" />
               <div className="border-b border-dotted border-gray-400 h-3 w-28 ml-auto" />
               <p className="text-gray-600 text-[10px] mt-0.5">Authorized Signatory</p>

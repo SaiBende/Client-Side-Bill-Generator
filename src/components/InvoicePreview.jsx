@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
 
-function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcSgst, numberToWords }) {
+function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcSgst, numberToWords, logo, logoSettings }) {
+  const logoStyle = logoSettings || { position: 'center', width: 80, height: 80 }
   const grandTotal = calcGrandTotal()
   const taxable = calcSubtotal()
   const cgst = calcCgst ? calcCgst() : 0
@@ -19,6 +20,11 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcS
     <div className="bg-white shadow-lg border border-gray-300 rounded-lg overflow-hidden text-xs">
       <div className="p-6">
         <div className="text-center mb-4">
+          {logo && (
+            <div className={`flex mb-2 ${logoStyle.position === 'left' ? 'justify-start' : logoStyle.position === 'right' ? 'justify-end' : 'justify-center'}`}>
+              <img src={logo} alt="Business Logo" className="object-contain" style={{ width: logoStyle.width, height: logoStyle.height }} />
+            </div>
+          )}
           <h2 className="text-lg md:text-xl font-bold text-gray-900 uppercase break-words">{invoice.businessName || 'Your Business Name'}</h2>
           <p className="text-gray-600 mt-1 leading-relaxed whitespace-pre" style={{ wordSpacing: '2px' }}>{invoice.businessAddress || 'Your Address'}</p>
           <div className="mt-1 text-gray-600">

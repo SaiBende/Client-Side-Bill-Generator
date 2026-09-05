@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import QRCode from 'qrcode'
 import { supabase } from './lib/supabase'
+import { getStoredLogo, getStoredLogoSettings, storeLogo, storeLogoSettings, clearStoredLogo, resizeLogo } from './lib/logo'
 import AuthModal from './components/auth/AuthModal'
 import Dashboard from './components/Dashboard'
 import InvoiceForm from './components/InvoiceForm'
@@ -41,6 +42,40 @@ const defaultInvoice = {
   upiName: '',
   terms: '',
   signature: '',
+}
+
+const BUSINESS_DEFAULTS_KEY = 'billing_business_defaults'
+
+function getBusinessDefaultsFromLocal() {
+  try {
+    const raw = localStorage.getItem(BUSINESS_DEFAULTS_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveBusinessDefaultsToLocal(defaults) {
+  try {
+    localStorage.setItem(BUSINESS_DEFAULTS_KEY, JSON.stringify(defaults))
+  } catch {
+  }
+}
+
+function businessDefaultsFromProfile(data) {
+  return {
+    businessName: data.business_name || '',
+    businessAddress: data.business_address || '',
+    businessPhone: data.business_phone || '',
+    businessEmail: data.business_email || '',
+    bankName: data.bank_name || '',
+    bankAccount: data.bank_account || '',
+    bankIfsc: data.bank_ifsc || '',
+    bankBranch: data.bank_branch || '',
+    upiId: data.upi_id || '',
+    upiName: data.upi_name || '',
+    gstin: data.gstin || '',
+  }
 }
 
 function SharedInvoiceView({ token, onClose }) {
@@ -195,6 +230,9 @@ function App() {
   const [shareToken, setShareToken] = useState(null)
   const [isSharedView, setIsSharedView] = useState(false)
 
+  const [logo, setLogo] = useState(getStoredLogo)
+  const [logoSettings, setLogoSettings] = useState(getStoredLogoSettings)
+
   const [showAuth, setShowAuth] = useState(false)
   const [toast, setToast] = useState(null)
   const pendingActionRef = useRef(null)
@@ -206,16 +244,63 @@ function App() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
+      if (session) {
+        loadProfileDefaultsToInvoice(session.user.id)
+      } else {
+        applyBusinessDefaults(getBusinessDefaultsFromLocal())
+      }
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
-      if (!session) {
+      if (session) {
+        loadProfileDefaultsToInvoice(session.user.id)
+      } else {
         setView('editor')
         setEditInvoiceId(null)
       }
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  async function loadProfileDefaultsToInvoice(userId) {
+    const { data } = await supabase.from('user_profiles').select('*').eq('user_id', userId).single()
+    applyBusinessDefaults(data ? businessDefaultsFromProfile(data) : getBusinessDefaultsFromLocal())
+  }
+
+  function applyBusinessDefaults(defaults) {
+    if (!defaults || !defaults.businessName) return
+    setInvoice(prev => prev.businessName ? prev : {
+      ...prev,
+      businessName: defaults.businessName || '',
+      businessAddress: defaults.businessAddress || '',
+      businessPhone: defaults.businessPhone || '',
+      businessEmail: defaults.businessEmail || '',
+      bankName: defaults.bankName || '',
+      bankAccount: defaults.bankAccount || '',
+      bankIfsc: defaults.bankIfsc || '',
+      bankBranch: defaults.bankBranch || '',
+      upiId: defaults.upiId || '',
+      upiName: defaults.upiName || '',
+      gstin: defaults.gstin || '',
+    })
+  }
+
+  useEffect(() => {
+    if (!invoice.businessName) return
+    saveBusinessDefaultsToLocal({
+      businessName: invoice.businessName,
+      businessAddress: invoice.businessAddress,
+      businessPhone: invoice.businessPhone,
+      businessEmail: invoice.businessEmail,
+      bankName: invoice.bankName,
+      bankAccount: invoice.bankAccount,
+      bankIfsc: invoice.bankIfsc,
+      bankBranch: invoice.bankBranch,
+      upiId: invoice.upiId,
+      upiName: invoice.upiName,
+      gstin: invoice.gstin,
+    })
+  }, [invoice.businessName, invoice.businessAddress, invoice.businessPhone, invoice.businessEmail, invoice.bankName, invoice.bankAccount, invoice.bankIfsc, invoice.bankBranch, invoice.upiId, invoice.upiName, invoice.gstin])
 
   useEffect(() => {
     if (session && pendingActionRef.current) {
@@ -235,12 +320,32 @@ function App() {
     }
   }
 
+  async function uploadLogo(file) {
+    if (!file) return
+    const dataUrl = await resizeLogo(file)
+    if (dataUrl) {
+      setLogo(dataUrl)
+      storeLogo(dataUrl)
+    }
+  }
+
+  function removeLogo() {
+    setLogo(null)
+    clearStoredLogo()
+  }
+
+  function updateLogoSettings(partial) {
+    const next = { ...logoSettings, ...partial }
+    setLogoSettings(next)
+    storeLogoSettings(next)
+  }
+
   async function loadInvoice(id) {
     const { data, error } = await supabase.from('invoices').select('*').eq('id', id).single()
     if (!error && data) {
       setInvoice({
-        businessName: data.business_name || 'Shri Raj Decors',
-        businessAddress: data.business_address || 'Vazirabad, Nanded - 431605',
+        businessName: data.business_name || '',
+        businessAddress: data.business_address || '',
         businessPhone: data.business_phone || '',
         businessEmail: data.business_email || '',
         customerName: data.customer_name || '',
@@ -273,22 +378,12 @@ function App() {
 
   async function handleNewInvoice() {
     const base = { ...defaultInvoice, invoiceNumber: generateInvoiceNumber() }
+    let defaults = getBusinessDefaultsFromLocal()
     if (session) {
       const { data } = await supabase.from('user_profiles').select('*').eq('user_id', session.user.id).single()
-      if (data) {
-        base.businessName = data.business_name || ''
-        base.businessAddress = data.business_address || ''
-        base.businessPhone = data.business_phone || ''
-        base.businessEmail = data.business_email || ''
-        base.bankName = data.bank_name || ''
-        base.bankAccount = data.bank_account || ''
-        base.bankIfsc = data.bank_ifsc || ''
-        base.bankBranch = data.bank_branch || ''
-        base.upiId = data.upi_id || ''
-        base.upiName = data.upi_name || ''
-        base.gstin = data.gstin || ''
-      }
+      if (data) defaults = businessDefaultsFromProfile(data)
     }
+    Object.assign(base, defaults)
     setInvoice(base)
     setEditInvoiceId(null)
     setView('editor')
@@ -681,11 +776,11 @@ function App() {
         <main className="max-w-7xl mx-auto p-3 md:p-4">
           <div className="flex flex-col md:flex-row gap-4 md:gap-6">
             <div className={`w-full md:w-1/2 ${activeTab === 'preview' ? 'hidden md:block' : ''}`}>
-              <InvoiceForm invoice={invoice} updateField={updateField} updateItem={updateItem} addItem={addItem} removeItem={removeItem} />
+              <InvoiceForm invoice={invoice} updateField={updateField} updateItem={updateItem} addItem={addItem} removeItem={removeItem} logo={logo} logoSettings={logoSettings} onUploadLogo={uploadLogo} onRemoveLogo={removeLogo} onLogoSettingsChange={updateLogoSettings} />
             </div>
             <div className={`w-full md:w-1/2 ${activeTab === 'form' ? 'hidden md:block' : ''}`}>
               <div className="md:sticky md:top-20">
-<InvoicePreview invoice={invoice} calcSubtotal={calcSubtotal} calcGrandTotal={calcGrandTotal} calcCgst={calcCgst} calcSgst={calcSgst} numberToWords={numberToWords} />
+<InvoicePreview invoice={invoice} calcSubtotal={calcSubtotal} calcGrandTotal={calcGrandTotal} calcCgst={calcCgst} calcSgst={calcSgst} numberToWords={numberToWords} logo={logo} logoSettings={logoSettings} />
               </div>
             </div>
           </div>
@@ -713,10 +808,10 @@ function App() {
 
       {/* ---- HIDDEN CAPTURE ELEMENTS ---- */}
       <div ref={previewRef} data-capture="true" className="fixed -left-[9999px] top-0 w-[794px]">
-        <InvoicePreview invoice={invoice} calcSubtotal={calcSubtotal} calcGrandTotal={calcGrandTotal} calcCgst={calcCgst} calcSgst={calcSgst} numberToWords={numberToWords} />
+        <InvoicePreview invoice={invoice} calcSubtotal={calcSubtotal} calcGrandTotal={calcGrandTotal} calcCgst={calcCgst} calcSgst={calcSgst} numberToWords={numberToWords} logo={logo} logoSettings={logoSettings} />
       </div>
       <div ref={blankPreviewRef} data-capture="true" className="fixed -left-[9999px] top-0 w-[794px]">
-        <BlankInvoicePreview businessName={invoice.businessName} businessAddress={invoice.businessAddress} businessPhone={invoice.businessPhone} businessEmail={invoice.businessEmail} />
+        <BlankInvoicePreview businessName={invoice.businessName} businessAddress={invoice.businessAddress} businessPhone={invoice.businessPhone} businessEmail={invoice.businessEmail} logo={logo} logoSettings={logoSettings} />
       </div>
 
       {/* ---- MODALS & TOASTS ---- */}

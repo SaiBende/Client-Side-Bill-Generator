@@ -1,4 +1,5 @@
-import { Plus, Trash2, Building2, User, ClipboardList, Banknote, ScrollText } from 'lucide-react'
+import { useRef } from 'react'
+import { Plus, Trash2, Building2, User, ClipboardList, Banknote, ScrollText, ImagePlus } from 'lucide-react'
 
 function Section({ icon: Icon, title, children }) {
   return (
@@ -32,10 +33,66 @@ function Input({ value, onChange, placeholder, type = 'text', className = '' }) 
   )
 }
 
-function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem }) {
+function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, logo, logoSettings, onUploadLogo, onRemoveLogo, onLogoSettingsChange }) {
+  const logoInputRef = useRef(null)
+
   return (
     <div className="space-y-4">
       <Section icon={Building2} title="Business">
+        <div className="flex flex-col items-center gap-3 mb-3 pb-3 border-b border-gray-100">
+          {logo ? (
+            <div className="w-full flex flex-col items-center gap-3">
+              <img src={logo} alt="Business Logo" className="object-contain"
+                style={{ width: logoSettings?.width || 80, height: logoSettings?.height || 80 }} />
+              <button onClick={onRemoveLogo}
+                className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700 transition-colors">
+                <Trash2 className="w-3.5 h-3.5" /> Remove Logo
+              </button>
+              <div className="w-full bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold text-gray-600">Position</span>
+                  <div className="flex bg-gray-100 rounded-lg p-0.5">
+                    {[
+                      { key: 'left', label: 'Left' },
+                      { key: 'center', label: 'Center' },
+                      { key: 'right', label: 'Right' },
+                    ].map(opt => (
+                      <button key={opt.key} onClick={() => onLogoSettingsChange({ position: opt.key })}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${logoSettings?.position === opt.key ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+<div className="grid grid-cols-2 gap-3 mt-2">
+                    <label className="block">
+                      <span className="block text-xs font-medium text-gray-600 mb-1">Width (px)</span>
+                      <input type="number" min="10" step="1" value={logoSettings?.width || 80}
+                        onChange={e => onLogoSettingsChange({ width: Math.max(10, Number(e.target.value) || 10) })}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                    </label>
+                    <label className="block">
+                      <span className="block text-xs font-medium text-gray-600 mb-1">Height (px)</span>
+                      <input type="number" min="10" step="1" value={logoSettings?.height || 80}
+                        onChange={e => onLogoSettingsChange({ height: Math.max(10, Number(e.target.value) || 10) })}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                    </label>
+                  </div>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => logoInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border-2 border-dashed border-blue-200 hover:border-blue-400">
+              <ImagePlus className="w-4 h-4" /> Upload Logo
+            </button>
+          )}
+          <input ref={logoInputRef} type="file" accept="image/*" className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (file) onUploadLogo(file)
+              e.target.value = ''
+            }} />
+        </div>
         <Field label="Business Name" required>
           <Input value={invoice.businessName} onChange={e => updateField('businessName', e.target.value)} placeholder="Your Business Name" />
         </Field>
