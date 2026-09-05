@@ -59,7 +59,7 @@ export function resizeLogo(file, maxDim = 400) {
         const ctx = canvas.getContext('2d')
         ctx.drawImage(img, 0, 0, width, height)
         try {
-          resolve(canvas.toDataURL('image/png'))
+          resolve({ dataUrl: canvas.toDataURL('image/png'), width, height })
         } catch {
           resolve(null)
         }

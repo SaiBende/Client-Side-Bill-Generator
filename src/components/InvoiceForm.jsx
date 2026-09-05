@@ -33,6 +33,55 @@ function Input({ value, onChange, placeholder, type = 'text', className = '' }) 
   )
 }
 
+function ResizableLogo({ logo, width, height, onChange, className = '' }) {
+  const min = 20
+  const startResize = (e, mode) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const startX = e.clientX
+    const startY = e.clientY
+    const origW = width
+    const origH = height
+    const ratio = origW / origH
+
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX
+      const dy = ev.clientY - startY
+      if (mode === 'corner') {
+        let newW = origW + dx
+        if (newW < min) newW = min
+        onChange(Math.round(newW), Math.round(newW / ratio))
+      } else if (mode === 'right') {
+        onChange(Math.max(min, Math.round(origW + dx)), origH)
+      } else {
+        onChange(origW, Math.max(min, Math.round(origH + dy)))
+      }
+    }
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
+  const handleClass = 'absolute w-3 h-3 bg-blue-600 border-2 border-white rounded-[2px] shadow'
+
+  return (
+    <div className={`relative inline-block select-none ${className}`}>
+      <img src={logo} alt="Business Logo" draggable={false} className="block object-fill"
+        style={{ width, height }} />
+      <div className="absolute inset-0 border border-blue-400 border-dashed pointer-events-none" />
+      <div className={`${handleClass} -right-1 top-1/2 -translate-y-1/2 cursor-ew-resize`}
+        style={{ touchAction: 'none' }} onPointerDown={e => startResize(e, 'right')} />
+      <div className={`${handleClass} -bottom-1 left-1/2 -translate-x-1/2 cursor-ns-resize`}
+        style={{ touchAction: 'none' }} onPointerDown={e => startResize(e, 'bottom')} />
+      <div className={`${handleClass} -bottom-1 -right-1 cursor-nwse-resize`}
+        style={{ touchAction: 'none' }} onPointerDown={e => startResize(e, 'corner')} />
+    </div>
+  )
+}
+
 function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, logo, logoSettings, onUploadLogo, onRemoveLogo, onLogoSettingsChange }) {
   const logoInputRef = useRef(null)
 
@@ -42,8 +91,9 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, lo
         <div className="flex flex-col items-center gap-3 mb-3 pb-3 border-b border-gray-100">
           {logo ? (
             <div className="w-full flex flex-col items-center gap-3">
-              <img src={logo} alt="Business Logo" className="object-contain"
-                style={{ width: logoSettings?.width || 80, height: logoSettings?.height || 80 }} />
+              <ResizableLogo logo={logo} width={logoSettings?.width || 80} height={logoSettings?.height || 80}
+                className="self-start" onChange={(w, h) => onLogoSettingsChange({ width: w, height: h })} />
+              <p className="text-[10px] text-gray-400">Drag handles to resize · corner keeps proportion</p>
               <button onClick={onRemoveLogo}
                 className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700 transition-colors">
                 <Trash2 className="w-3.5 h-3.5" /> Remove Logo

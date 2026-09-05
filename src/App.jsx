@@ -322,11 +322,19 @@ function App() {
 
   async function uploadLogo(file) {
     if (!file) return
-    const dataUrl = await resizeLogo(file)
-    if (dataUrl) {
-      setLogo(dataUrl)
-      storeLogo(dataUrl)
+    const resized = await resizeLogo(file)
+    if (!resized) return
+    setLogo(resized.dataUrl)
+    storeLogo(resized.dataUrl)
+    const base = 80
+    const aspect = resized.width / resized.height
+    let w = Math.round(base * aspect)
+    let h = base
+    if (w > 300) {
+      w = 300
+      h = Math.round(300 / aspect)
     }
+    updateLogoSettings({ width: w, height: h })
   }
 
   function removeLogo() {
@@ -557,20 +565,14 @@ function App() {
       },
     })
     const imgData = canvas.toDataURL('image/jpeg', 0.95)
-    const imgWidth = 210
+    const pageWidth = 210
     const pageHeight = 297
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
+    const naturalHeight = (canvas.height * pageWidth) / canvas.width
+    const fit = Math.min(1, pageHeight / naturalHeight)
+    const imgWidth = pageWidth * fit
+    const imgHeight = naturalHeight * fit
     const pdf = new jsPDF('p', 'mm', 'a4')
-    let heightLeft = imgHeight
-    let position = 0
-    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
-    heightLeft -= pageHeight
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight
-      pdf.addPage()
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
-      heightLeft -= pageHeight
-    }
+    pdf.addImage(imgData, 'JPEG', (pageWidth - imgWidth) / 2, 0, imgWidth, imgHeight)
     if (filename) pdf.save(filename)
     return pdf
   }

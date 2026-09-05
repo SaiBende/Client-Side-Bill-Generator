@@ -8,7 +8,7 @@ export default function BlankInvoicePreview({ businessName, businessAddress, bus
         <div className="text-center mb-2">
           {logo && (
             <div className={`flex mb-2 ${style.position === 'left' ? 'justify-start' : style.position === 'right' ? 'justify-end' : 'justify-center'}`}>
-              <img src={logo} alt="Business Logo" className="object-contain" style={{ width: style.width, height: style.height }} />
+              <img src={logo} alt="Business Logo" className="object-fill" style={{ width: style.width, height: style.height }} />
             </div>
           )}
           <h2 className="text-base font-bold text-gray-900 uppercase break-words">{businessName || 'Your Business Name'}</h2>
