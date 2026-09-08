@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import QRCode from 'qrcode'
 import { supabase } from './lib/supabase'
 import { getStoredLogo, getStoredLogoSettings, storeLogo, storeLogoSettings, clearStoredLogo, resizeLogo } from './lib/logo'
+import { measurementItemAmount } from './lib/measurements'
 import AuthModal from './components/auth/AuthModal'
 import Dashboard from './components/Dashboard'
 import InvoiceForm from './components/InvoiceForm'
@@ -33,7 +34,8 @@ const defaultInvoice = {
   discount: 0,
   enableGst: false,
   gstin: '',
-  items: [{ description: '', quantity: 1, rate: 0, hsn: '', gstRate: 0 }],
+  billType: 'normal',
+  items: [{ description: '', quantity: 1, rate: 0, hsn: '', gstRate: 0, areaUnit: 'sqft', measurements: [{ width: '', height: '', unit: 'in', quantity: 1 }] }],
   bankName: '',
   bankAccount: '',
   bankIfsc: '',
@@ -101,6 +103,9 @@ function SharedInvoiceView({ token, onClose }) {
 
   function calcSubtotal() {
     if (!invoice?.items) return 0
+    if (invoice.bill_type === 'measurement') {
+      return invoice.items.reduce((sum, item) => sum + measurementItemAmount(item), 0)
+    }
     return invoice.items.reduce((sum, item) => sum + (item.quantity || 0) * (item.rate || 0), 0)
   }
   function calcTaxable() { return invoice?.enable_gst ? calcSubtotal() : 0 }
@@ -153,10 +158,13 @@ function SharedInvoiceView({ token, onClose }) {
     customerCity: invoice.customer_city,
     customerState: invoice.customer_state,
     customerPincode: invoice.customer_pincode,
-    invoiceNumber: invoice.invoice_number,
+invoiceNumber: invoice.invoice_number,
     invoiceDate: invoice.invoice_date,
     dueDate: invoice.due_date,
     discount: invoice.discount,
+    enableGst: invoice.enable_gst,
+    gstin: invoice.gstin || '',
+    billType: invoice.bill_type || 'normal',
     items: invoice.items,
     bankName: invoice.bank_name,
     bankAccount: invoice.bank_account,
@@ -236,6 +244,23 @@ function App() {
   const [showAuth, setShowAuth] = useState(false)
   const [toast, setToast] = useState(null)
   const pendingActionRef = useRef(null)
+  const [autosaveState, setAutosaveState] = useState('idle')
+  const autosaveTimerRef = useRef(null)
+  const autosaveSigRef = useRef(null)
+  const saveInvoiceToDBRef = useRef(null)
+  saveInvoiceToDBRef.current = saveInvoiceToDB
+
+  useEffect(() => {
+    const blockWheelOnNumber = (e) => {
+      const el = e.target
+      if (el && el.tagName === 'INPUT' && el.type === 'number' && document.activeElement === el) {
+        e.preventDefault()
+        el.blur()
+      }
+    }
+    window.addEventListener('wheel', blockWheelOnNumber, { passive: false })
+    return () => window.removeEventListener('wheel', blockWheelOnNumber)
+  }, [])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -246,6 +271,7 @@ function App() {
       setSession(session)
       if (session) {
         loadProfileDefaultsToInvoice(session.user.id)
+        restoreLatestInvoice(session.user.id)
       } else {
         applyBusinessDefaults(getBusinessDefaultsFromLocal())
       }
@@ -254,9 +280,12 @@ function App() {
       setSession(session)
       if (session) {
         loadProfileDefaultsToInvoice(session.user.id)
+        if (_event === 'SIGNED_IN') restoreLatestInvoice(session.user.id)
       } else {
         setView('editor')
         setEditInvoiceId(null)
+        setAutosaveState('idle')
+        autosaveSigRef.current = null
       }
     })
     return () => subscription.unsubscribe()
@@ -301,6 +330,34 @@ function App() {
       gstin: invoice.gstin,
     })
   }, [invoice.businessName, invoice.businessAddress, invoice.businessPhone, invoice.businessEmail, invoice.bankName, invoice.bankAccount, invoice.bankIfsc, invoice.bankBranch, invoice.upiId, invoice.upiName, invoice.gstin])
+
+  useEffect(() => {
+    const hasContent = !!(invoice.customerName?.trim() || invoice.customerAddress?.trim() || invoice.items?.some(i =>
+      (i.description || '').trim() || Number(i.rate) > 0 || (i.measurements || []).some(m => Number(m.width) > 0 || Number(m.height) > 0)
+    ))
+    if (!session || view !== 'editor' || !hasContent) {
+      setAutosaveState('idle')
+      return
+    }
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
+    setAutosaveState('pending')
+    autosaveTimerRef.current = setTimeout(async () => {
+      autosaveTimerRef.current = null
+      const sig = JSON.stringify(invoice)
+      if (sig === autosaveSigRef.current) return
+      setAutosaveState('saving')
+      const { error } = await saveInvoiceToDBRef.current()
+      if (error) {
+        setAutosaveState('error')
+      } else {
+        autosaveSigRef.current = sig
+        setAutosaveState('saved')
+      }
+    }, 1200)
+    return () => {
+      if (autosaveTimerRef.current) { clearTimeout(autosaveTimerRef.current); autosaveTimerRef.current = null }
+    }
+  }, [invoice, session, view])
 
   useEffect(() => {
     if (session && pendingActionRef.current) {
@@ -348,40 +405,54 @@ function App() {
     storeLogoSettings(next)
   }
 
+  function loadInvoiceFromRow(data) {
+    const mapped = {
+      businessName: data.business_name || '',
+      businessAddress: data.business_address || '',
+      businessPhone: data.business_phone || '',
+      businessEmail: data.business_email || '',
+      customerName: data.customer_name || '',
+      customerAddress: data.customer_address || '',
+      customerCity: data.customer_city || '',
+      customerState: data.customer_state || '',
+      customerPincode: data.customer_pincode || '',
+      invoiceNumber: data.invoice_number,
+      invoiceDate: data.invoice_date,
+      dueDate: data.due_date || '',
+      discount: data.discount || 0,
+      enableGst: data.enable_gst || false,
+      gstin: data.gstin || '',
+      billType: data.bill_type || 'normal',
+      items: (data.items || [{ description: '', quantity: 1, rate: 0, hsn: '', gstRate: 0, areaUnit: 'sqft', measurements: [{ width: '', height: '', unit: 'in', quantity: 1 }] }]).map(item => ({
+        ...item,
+        quantity: item.quantity || 1,
+        measurements: Array.isArray(item.measurements) ? item.measurements : [{ width: item.width, height: item.height, unit: item.unit || 'in', quantity: Number(item.quantity) || 1 }],
+      })),
+      bankName: data.bank_name || '',
+      bankAccount: data.bank_account || '',
+      bankIfsc: data.bank_ifsc || '',
+      bankBranch: data.bank_branch || '',
+      upiId: data.upi_id || '',
+      upiName: data.upi_name || '',
+      terms: data.terms || '',
+      signature: data.signature || '',
+    }
+    setInvoice(mapped)
+    setEditInvoiceId(data.id)
+    setShareToken(data.share_token)
+    setView('editor')
+    setActiveTab('form')
+    autosaveSigRef.current = JSON.stringify(mapped)
+  }
+
   async function loadInvoice(id) {
     const { data, error } = await supabase.from('invoices').select('*').eq('id', id).single()
-    if (!error && data) {
-      setInvoice({
-        businessName: data.business_name || '',
-        businessAddress: data.business_address || '',
-        businessPhone: data.business_phone || '',
-        businessEmail: data.business_email || '',
-        customerName: data.customer_name || '',
-        customerAddress: data.customer_address || '',
-        customerCity: data.customer_city || '',
-        customerState: data.customer_state || '',
-        customerPincode: data.customer_pincode || '',
-        invoiceNumber: data.invoice_number,
-        invoiceDate: data.invoice_date,
-        dueDate: data.due_date || '',
-        discount: data.discount || 0,
-        enableGst: data.enable_gst || false,
-        gstin: data.gstin || '',
-        items: data.items || [{ description: '', quantity: 1, rate: 0, hsn: '', gstRate: 0 }],
-        bankName: data.bank_name || '',
-        bankAccount: data.bank_account || '',
-        bankIfsc: data.bank_ifsc || '',
-        bankBranch: data.bank_branch || '',
-        upiId: data.upi_id || '',
-        upiName: data.upi_name || '',
-        terms: data.terms || '',
-        signature: data.signature || '',
-      })
-      setEditInvoiceId(id)
-      setShareToken(data.share_token)
-      setView('editor')
-      setActiveTab('form')
-    }
+    if (!error && data) loadInvoiceFromRow(data)
+  }
+
+  async function restoreLatestInvoice(userId) {
+    const { data } = await supabase.from('invoices').select('*').eq('user_id', userId).order('updated_at', { ascending: false }).limit(1)
+    if (data && data.length) loadInvoiceFromRow(data[0])
   }
 
   async function handleNewInvoice() {
@@ -427,7 +498,36 @@ function App() {
   function addItem() {
     setInvoice(prev => ({
       ...prev,
-      items: [...prev.items, { description: '', quantity: 1, rate: 0, hsn: '', gstRate: 0 }],
+      items: [...prev.items, { description: '', quantity: 1, rate: 0, hsn: '', gstRate: 0, areaUnit: 'sqft', measurements: [{ width: '', height: '', unit: 'in', quantity: 1 }] }],
+    }))
+  }
+
+  function addItemMeasurement(index) {
+    setInvoice(prev => ({
+      ...prev,
+      items: prev.items.map((item, i) => i === index
+        ? { ...item, measurements: [...((item.measurements && item.measurements.length) ? item.measurements : [{ width: '', height: '', unit: 'in', quantity: 1 }]), { width: '', height: '', unit: 'in', quantity: 1 }] }
+        : item),
+    }))
+  }
+
+  function updateItemMeasurement(index, mIndex, field, value) {
+    setInvoice(prev => ({
+      ...prev,
+      items: prev.items.map((item, i) => i === index
+        ? { ...item, measurements: item.measurements.map((m, mi) => mi === mIndex ? { ...m, [field]: value } : m) }
+        : item),
+    }))
+  }
+
+  function removeItemMeasurement(index, mIndex) {
+    setInvoice(prev => ({
+      ...prev,
+      items: prev.items.map((item, i) => {
+        if (i !== index) return item
+        const measurements = item.measurements.filter((_, mi) => mi !== mIndex)
+        return { ...item, measurements: measurements.length ? measurements : [{ width: '', height: '', unit: 'in', quantity: 1 }] }
+      }),
     }))
   }
 
@@ -439,6 +539,9 @@ function App() {
   }
 
   function calcSubtotal() {
+    if (invoice.billType === 'measurement') {
+      return invoice.items.reduce((sum, item) => sum + measurementItemAmount(item), 0)
+    }
     return invoice.items.reduce((sum, item) => sum + item.quantity * item.rate, 0)
   }
 
@@ -456,6 +559,7 @@ function App() {
   }
 
   async function saveInvoiceToDB() {
+    if (autosaveTimerRef.current) { clearTimeout(autosaveTimerRef.current); autosaveTimerRef.current = null }
     const grandTotal = calcGrandTotal()
     const payload = {
       user_id: session.user.id,
@@ -474,6 +578,7 @@ function App() {
       discount: invoice.discount,
       enable_gst: invoice.enableGst,
       gstin: invoice.gstin,
+      bill_type: invoice.billType,
       items: invoice.items,
       grand_total: grandTotal,
       bank_name: invoice.bankName,
@@ -486,33 +591,49 @@ function App() {
       signature: invoice.signature,
       status: 'pending',
     }
+    let error = null
     if (editInvoiceId) {
-      await supabase.from('invoices').update(payload).eq('id', editInvoiceId)
+      const res = await supabase.from('invoices').update(payload).eq('id', editInvoiceId)
+      error = res.error
     } else {
-      const { data } = await supabase.from('invoices').insert(payload).select('id, share_token').single()
-      if (data) { setEditInvoiceId(data.id); setShareToken(data.share_token) }
+      const res = await supabase.from('invoices').insert(payload).select('id, share_token').single()
+      if (res.error) {
+        error = res.error
+      } else if (res.data) {
+        setEditInvoiceId(res.data.id)
+        setShareToken(res.data.share_token)
+      }
     }
-    await supabase.from('user_profiles').upsert({
-      user_id: session.user.id,
-      business_name: invoice.businessName,
-      business_address: invoice.businessAddress,
-      business_phone: invoice.businessPhone,
-      business_email: invoice.businessEmail,
-      bank_name: invoice.bankName,
-      bank_account: invoice.bankAccount,
-      bank_ifsc: invoice.bankIfsc,
-      bank_branch: invoice.bankBranch,
-      upi_id: invoice.upiId,
-      upi_name: invoice.upiName,
-      gstin: invoice.gstin,
-    }, { onConflict: 'user_id' })
+    if (!error) {
+      const res = await supabase.from('user_profiles').upsert({
+        user_id: session.user.id,
+        business_name: invoice.businessName,
+        business_address: invoice.businessAddress,
+        business_phone: invoice.businessPhone,
+        business_email: invoice.businessEmail,
+        bank_name: invoice.bankName,
+        bank_account: invoice.bankAccount,
+        bank_ifsc: invoice.bankIfsc,
+        bank_branch: invoice.bankBranch,
+        upi_id: invoice.upiId,
+        upi_name: invoice.upiName,
+        gstin: invoice.gstin,
+      }, { onConflict: 'user_id' })
+      error = res.error
+    }
+    return { error }
   }
 
   async function saveInvoice() {
     setSaving(true)
-    await saveInvoiceToDB()
-    setSaving(false)
-    setToast('Invoice saved successfully!')
+    try {
+      const { error } = await saveInvoiceToDB()
+      setToast(error ? 'Save failed. Please try again.' : 'Invoice saved successfully!')
+    } catch {
+      setToast('Save failed. Please try again.')
+    } finally {
+      setSaving(false)
+    }
     setTimeout(() => setToast(null), 3000)
   }
 
@@ -579,9 +700,10 @@ function App() {
 
   function downloadPDF() {
     requireAuth(async () => {
-      await saveInvoiceToDB()
+      const { error } = await saveInvoiceToDB()
       setGenerating(true)
       try {
+        if (error) throw error
         const el = previewRef.current
         if (!el) return
         await captureToPDF(el, `Invoice-${invoice.invoiceNumber}.pdf`)
@@ -591,9 +713,10 @@ function App() {
 
   function sharePDF() {
     requireAuth(async () => {
-      await saveInvoiceToDB()
+      const { error } = await saveInvoiceToDB()
       setGenerating(true)
       try {
+        if (error) throw error
         const el = previewRef.current
         if (!el) return
         const pdf = await captureToPDF(el)
@@ -613,9 +736,10 @@ function App() {
 
   function shareImage() {
     requireAuth(async () => {
-      await saveInvoiceToDB()
+      const { error } = await saveInvoiceToDB()
       setGenerating(true)
       try {
+        if (error) throw error
         const el = previewRef.current
         if (!el) return
         const canvas = await html2canvas(el, {
@@ -698,8 +822,13 @@ function App() {
             )}
             {isEditor && <>
               <button onClick={handleSaveClick} disabled={saving}
-                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >{saving ? 'Saving...' : editInvoiceId ? 'Update' : 'Save'}</button>
+              {session && autosaveState !== 'idle' && (
+                <span className="text-[11px] text-gray-500 hidden md:inline w-16 text-center">
+                  {autosaveState === 'saving' ? 'Saving…' : autosaveState === 'error' ? 'Save failed' : autosaveState === 'saved' ? 'Saved' : ''}
+                </span>
+              )}
               <button onClick={downloadPDF} disabled={generating}
                 className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
               ><Download className="w-4 h-4" /><span>{generating ? '...' : 'PDF'}</span></button>
@@ -735,6 +864,11 @@ function App() {
             <button onClick={handleSaveClick} disabled={saving}
               className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors shrink-0"
             >{saving ? '...' : editInvoiceId ? 'Update' : 'Save'}</button>
+            {session && autosaveState !== 'idle' && (
+              <span className="text-[10px] text-gray-500">
+                {autosaveState === 'saving' ? 'Saving…' : autosaveState === 'error' ? 'Failed' : autosaveState === 'saved' ? 'Saved' : ''}
+              </span>
+            )}
           </div>
           <div className="max-w-7xl mx-auto px-3 pb-2 flex gap-1.5 overflow-x-auto md:hidden scrollbar-none">
             <button onClick={downloadPDF} disabled={generating}
@@ -778,7 +912,9 @@ function App() {
         <main className="max-w-7xl mx-auto p-3 md:p-4">
           <div className="flex flex-col md:flex-row gap-4 md:gap-6">
             <div className={`w-full md:w-1/2 ${activeTab === 'preview' ? 'hidden md:block' : ''}`}>
-              <InvoiceForm invoice={invoice} updateField={updateField} updateItem={updateItem} addItem={addItem} removeItem={removeItem} logo={logo} logoSettings={logoSettings} onUploadLogo={uploadLogo} onRemoveLogo={removeLogo} onLogoSettingsChange={updateLogoSettings} />
+              <InvoiceForm invoice={invoice} updateField={updateField} updateItem={updateItem} addItem={addItem} removeItem={removeItem} addItemMeasurement={addItemMeasurement}
+              updateItemMeasurement={updateItemMeasurement}
+              removeItemMeasurement={removeItemMeasurement} logo={logo} logoSettings={logoSettings} onUploadLogo={uploadLogo} onRemoveLogo={removeLogo} onLogoSettingsChange={updateLogoSettings} />
             </div>
             <div className={`w-full md:w-1/2 ${activeTab === 'form' ? 'hidden md:block' : ''}`}>
               <div className="md:sticky md:top-20">

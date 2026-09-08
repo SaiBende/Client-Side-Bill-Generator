@@ -31,6 +31,7 @@ CREATE TABLE invoices (
   enable_gst BOOLEAN DEFAULT false,
   gstin TEXT DEFAULT '',
   grand_total NUMERIC(10, 2) DEFAULT 0,
+  bill_type TEXT DEFAULT 'normal' CHECK (bill_type IN ('normal', 'measurement')),
 
   -- Items (stored as JSONB for simplicity)
   items JSONB DEFAULT '[]'::jsonb,

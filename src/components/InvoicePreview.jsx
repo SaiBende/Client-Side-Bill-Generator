@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
+import { measurementRows, measurementRowAmount, measurementRowAreaInPricing, formatTotalArea, unitLabel, areaUnitLabel } from '../lib/measurements'
 
 function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcSgst, numberToWords, logo, logoSettings }) {
   const logoStyle = logoSettings || { position: 'center', width: 80, height: 80 }
@@ -65,16 +66,47 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcS
         <table className="w-full border-collapse mb-2">
           <thead>
             <tr className="bg-gray-900 text-white">
-              <th className="text-left p-1.5 text-[13px] font-semibold w-[5%]">#</th>
-              {invoice.enableGst && <th className="text-left p-1.5 text-[13px] font-semibold w-[12%]">HSN</th>}
-              <th className="text-left p-1.5 text-[13px] font-semibold">Description</th>
-              <th className="text-center p-1.5 text-[13px] font-semibold w-[10%]">Qty</th>
-              <th className="text-right p-1.5 text-[13px] font-semibold w-[13%]">Rate</th>
-              <th className="text-right p-1.5 text-[13px] font-semibold w-[17%]">Amount</th>
+              {invoice.billType === 'measurement' ? (
+                <>
+                  <th className="text-left p-1.5 text-[13px] font-semibold w-[5%]">#</th>
+                  {invoice.enableGst && <th className="text-left p-1.5 text-[13px] font-semibold w-[10%]">HSN</th>}
+                  <th className="text-left p-1.5 text-[13px] font-semibold">Description</th>
+                  <th className="text-left p-1.5 text-[13px] font-semibold w-[22%]">Size</th>
+                  <th className="text-center p-1.5 text-[13px] font-semibold w-[8%]">Qty</th>
+                  <th className="text-right p-1.5 text-[13px] font-semibold w-[15%]">Rate</th>
+                  <th className="text-right p-1.5 text-[13px] font-semibold w-[17%]">Amount</th>
+                </>
+              ) : (
+                <>
+                  <th className="text-left p-1.5 text-[13px] font-semibold w-[5%]">#</th>
+                  {invoice.enableGst && <th className="text-left p-1.5 text-[13px] font-semibold w-[12%]">HSN</th>}
+                  <th className="text-left p-1.5 text-[13px] font-semibold">Description</th>
+                  <th className="text-center p-1.5 text-[13px] font-semibold w-[10%]">Qty</th>
+                  <th className="text-right p-1.5 text-[13px] font-semibold w-[13%]">Rate</th>
+                  <th className="text-right p-1.5 text-[13px] font-semibold w-[17%]">Amount</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
-            {invoice.items.map((item, index) => (
+            {invoice.items.map((item, index) => invoice.billType === 'measurement' ? (
+              measurementRows(item).map((m, mi) => (
+                <tr key={`${index}-${mi}`} className="border-b border-gray-200">
+                  {mi === 0 && <td rowSpan={measurementRows(item).length} className="p-1.5 text-gray-700 text-[13px] align-top">{index + 1}</td>}
+                  {invoice.enableGst && mi === 0 && <td rowSpan={measurementRows(item).length} className="p-1.5 text-gray-600 text-[12px] align-top">{item.hsn || '-'}</td>}
+                  {mi === 0 && <td rowSpan={measurementRows(item).length} className="p-1.5 text-gray-800 text-[13px] align-top">{item.description || '-'}
+                    <span className="block text-[11px] text-blue-700 font-medium mt-0.5">Total: {formatTotalArea(item)}</span>
+                  </td>}
+                  <td className="p-1.5">
+                    <span className="text-[13px] text-gray-800">{m.width || '-'} {unitLabel(m.unit)} × {m.height || '-'} {unitLabel(m.unit)}</span>
+                    <span className="block text-[11px] text-gray-500">{measurementRowAreaInPricing(m, item.areaUnit).toFixed(2)} {areaUnitLabel(item.areaUnit)}</span>
+                  </td>
+                  <td className="p-1.5 text-gray-800 text-center text-[13px]">{m.quantity}</td>
+                  <td className="p-1.5 text-gray-800 text-right text-[13px]">₹{item.rate.toFixed(2)}/{areaUnitLabel(item.areaUnit)}</td>
+                  <td className="p-1.5 text-gray-800 text-right font-medium text-[13px]">₹{measurementRowAmount(item, m).toFixed(2)}</td>
+                </tr>
+              ))
+            ) : (
               <tr key={index} className="border-b border-gray-200">
                 <td className="p-1.5 text-gray-700 text-[13px]">{index + 1}</td>
                 {invoice.enableGst && <td className="p-1.5 text-gray-600 text-[12px]">{item.hsn || '-'}</td>}
@@ -86,7 +118,7 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcS
             ))}
             {invoice.items.length === 0 && (
               <tr>
-                <td colSpan={invoice.enableGst ? 6 : 5} className="p-3 text-center text-gray-400 text-[13px]">No items added</td>
+                <td colSpan={invoice.enableGst ? (invoice.billType === 'measurement' ? 7 : 6) : (invoice.billType === 'measurement' ? 6 : 5)} className="p-3 text-center text-gray-400 text-[13px]">No items added</td>
               </tr>
             )}
           </tbody>

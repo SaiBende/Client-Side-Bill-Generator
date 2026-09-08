@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { Plus, Trash2, Building2, User, ClipboardList, Banknote, ScrollText, ImagePlus } from 'lucide-react'
+import { measurementItemAmount, formatTotalArea, measurementRows, measurementRowAreaInPricing, areaUnitLabel } from '../lib/measurements'
 
 function Section({ icon: Icon, title, children }) {
   return (
@@ -82,7 +83,7 @@ function ResizableLogo({ logo, width, height, onChange, className = '' }) {
   )
 }
 
-function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, logo, logoSettings, onUploadLogo, onRemoveLogo, onLogoSettingsChange }) {
+function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, addItemMeasurement, updateItemMeasurement, removeItemMeasurement, logo, logoSettings, onUploadLogo, onRemoveLogo, onLogoSettingsChange }) {
   const logoInputRef = useRef(null)
 
   return (
@@ -198,6 +199,19 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, lo
           </Field>
         </div>
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <span className="text-sm font-medium text-gray-700">Bill Type</span>
+          <div className="flex bg-gray-100 rounded-lg p-0.5">
+            <button onClick={() => updateField('billType', 'normal')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${invoice.billType !== 'measurement' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+              Normal
+            </button>
+            <button onClick={() => updateField('billType', 'measurement')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${invoice.billType === 'measurement' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+              Size / Area
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <span className="text-sm font-medium text-gray-700">Enable GST</span>
           <button onClick={() => updateField('enableGst', !invoice.enableGst)}
             className={`relative w-10 h-5 rounded-full transition-colors ${invoice.enableGst ? 'bg-blue-600' : 'bg-gray-300'}`}
@@ -246,19 +260,92 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, lo
                 </Field>
               </div>
             )}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-              <Field label="Qty">
-                <Input value={item.quantity} onChange={e => updateItem(index, 'quantity', Number(e.target.value))} type="number" min="1" />
-              </Field>
-              <Field label="Rate">
-                <Input value={item.rate} onChange={e => updateItem(index, 'rate', Number(e.target.value))} type="number" min="0" />
-              </Field>
-              <Field label="Amount">
-                <div className="w-full px-3 py-2 text-sm bg-gray-100 border border-gray-200 rounded-lg text-gray-700">
-                  ₹{(item.quantity * item.rate).toFixed(2)}
-                </div>
-              </Field>
-            </div>
+{invoice.billType === 'measurement' ? (
+                <>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <Field label="Rate">
+                      <Input value={item.rate} onChange={e => updateItem(index, 'rate', Number(e.target.value))} type="number" min="0" />
+                    </Field>
+                    <Field label="Price Unit">
+                      <select value={item.areaUnit || 'sqft'} onChange={e => updateItem(index, 'areaUnit', e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      >
+                        <option value="sqft">Per sq ft</option>
+                        <option value="sqin">Per sq inch</option>
+                      </select>
+                    </Field>
+                  </div>
+                  <div className="mt-2 space-y-2">
+                    {measurementRows(item).map((m, mIndex) => (
+                      <div key={mIndex} className="bg-white border border-gray-200 rounded-lg p-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-semibold text-gray-500">Size #{mIndex + 1}</span>
+                          {measurementRows(item).length > 1 && (
+                            <button onClick={() => removeItemMeasurement(index, mIndex)}
+                              className="text-red-500 hover:text-red-700 p-0.5">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Field label="Width">
+                            <Input value={m.width ?? ''} onChange={e => updateItemMeasurement(index, mIndex, 'width', e.target.value)} placeholder="Width" type="number" min="0" />
+                          </Field>
+                          <Field label="Height">
+                            <Input value={m.height ?? ''} onChange={e => updateItemMeasurement(index, mIndex, 'height', e.target.value)} placeholder="Height" type="number" min="0" />
+                          </Field>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 mt-2">
+                          <Field label="Unit">
+                            <select value={m.unit || 'in'} onChange={e => updateItemMeasurement(index, mIndex, 'unit', e.target.value)}
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            >
+                              <option value="in">in</option>
+                              <option value="ft">ft</option>
+                            </select>
+                          </Field>
+                          <Field label="Qty">
+                            <Input value={m.quantity} onChange={e => updateItemMeasurement(index, mIndex, 'quantity', Number(e.target.value))} type="number" min="1" />
+                          </Field>
+                          <div className="col-span-2">
+                            <Field label="Area">
+                              <div className="w-full px-3 py-2 text-sm bg-gray-100 border border-gray-200 rounded-lg text-gray-700">
+                                {measurementRowAreaInPricing(m, item.areaUnit).toFixed(2)} {areaUnitLabel(item.areaUnit)}
+                              </div>
+                            </Field>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => addItemMeasurement(index)}
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-dashed border-blue-200 hover:border-blue-400 mt-2">
+                    <Plus className="w-3.5 h-3.5" /> Add Size
+                  </button>
+                  <div className="flex items-center justify-between text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 mt-2">
+                    <div>
+                      <span className="text-gray-600">Sizes: <span className="font-medium text-gray-800">{measurementRows(item).length}</span></span>
+                      <span className="text-gray-400 mx-2">|</span>
+                      <span className="text-gray-600">Total Area: <span className="font-medium text-gray-800">{formatTotalArea(item)}</span></span>
+                    </div>
+                    <span className="text-gray-800 font-medium">₹{measurementItemAmount(item).toFixed(2)}</span>
+                  </div>
+                </>
+              ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                <Field label="Qty">
+                  <Input value={item.quantity} onChange={e => updateItem(index, 'quantity', Number(e.target.value))} type="number" min="1" />
+                </Field>
+                <Field label="Rate">
+                  <Input value={item.rate} onChange={e => updateItem(index, 'rate', Number(e.target.value))} type="number" min="0" />
+                </Field>
+                <Field label="Amount">
+                  <div className="w-full px-3 py-2 text-sm bg-gray-100 border border-gray-200 rounded-lg text-gray-700">
+                    ₹{(item.quantity * item.rate).toFixed(2)}
+                  </div>
+                </Field>
+              </div>
+            )}
           </div>
         ))}
         <button onClick={addItem}
@@ -268,7 +355,7 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, lo
         <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 mt-3">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-gray-700">Subtotal:</span>
-            <span className="text-gray-800">₹{invoice.items.reduce((s, i) => s + i.quantity * i.rate, 0).toFixed(2)}</span>
+            <span className="text-gray-800">₹{invoice.items.reduce((s, i) => s + (invoice.billType === 'measurement' ? measurementItemAmount(i) : i.quantity * i.rate), 0).toFixed(2)}</span>
           </div>
           <div className="flex items-center justify-between text-sm mt-1">
             <label className="font-medium text-gray-700">Discount (₹):</label>
@@ -278,7 +365,7 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, lo
           <hr className="border-t border-gray-300 my-1.5" />
           <div className="flex items-center justify-between text-sm font-bold text-gray-900">
             <span>Grand Total:</span>
-            <span>₹{(invoice.items.reduce((s, i) => s + i.quantity * i.rate, 0) - invoice.discount).toFixed(2)}</span>
+            <span>₹{(invoice.items.reduce((s, i) => s + (invoice.billType === 'measurement' ? measurementItemAmount(i) : i.quantity * i.rate), 0) - invoice.discount).toFixed(2)}</span>
           </div>
         </div>
       </Section>
