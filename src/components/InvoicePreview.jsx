@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
-import { measurementRows, measurementRowAmount, measurementRowAreaInPricing, formatTotalArea, unitLabel, areaUnitLabel } from '../lib/measurements'
+import { measurementRows, measurementItemAmount, measurementRowAreaInPricing, formatTotalArea, unitLabel, areaUnitLabel } from '../lib/measurements'
 
 function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcSgst, numberToWords, logo, logoSettings }) {
   const logoStyle = logoSettings || { position: 'center', width: 80, height: 80 }
@@ -104,7 +104,7 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcS
                   </td>
                   <td className="p-1.5 text-gray-800 text-center text-[13px]">{m.quantity}</td>
                   {mi === 0 && <td rowSpan={rows.length} className="p-1.5 text-gray-800 text-right align-top text-[13px]">₹{item.rate.toFixed(2)}/{areaUnitLabel(item.areaUnit)}</td>}
-                  <td className="p-1.5 text-gray-800 text-right font-medium text-[13px]">₹{measurementRowAmount(item, m).toFixed(2)}</td>
+                  {mi === 0 && <td rowSpan={rows.length} className="p-1.5 text-gray-800 text-right align-top font-medium text-[13px]">₹{measurementItemAmount(item).toFixed(2)}</td>}
                 </tr>
               ))
             })() : (
