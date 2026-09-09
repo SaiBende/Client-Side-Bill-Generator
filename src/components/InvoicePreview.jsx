@@ -89,12 +89,13 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcS
             </tr>
           </thead>
           <tbody>
-            {invoice.items.map((item, index) => invoice.billType === 'measurement' ? (
-              measurementRows(item).map((m, mi) => (
+            {invoice.items.map((item, index) => invoice.billType === 'measurement' ? (() => {
+              const rows = measurementRows(item)
+              return rows.map((m, mi) => (
                 <tr key={`${index}-${mi}`} className="border-b border-gray-200">
-                  {mi === 0 && <td rowSpan={measurementRows(item).length} className="p-1.5 text-gray-700 text-[13px] align-top">{index + 1}</td>}
-                  {invoice.enableGst && mi === 0 && <td rowSpan={measurementRows(item).length} className="p-1.5 text-gray-600 text-[12px] align-top">{item.hsn || '-'}</td>}
-                  {mi === 0 && <td rowSpan={measurementRows(item).length} className="p-1.5 text-gray-800 text-[13px] align-top">{item.description || '-'}
+                  {mi === 0 && <td rowSpan={rows.length} className="p-1.5 text-gray-700 text-[13px] align-top">{index + 1}</td>}
+                  {invoice.enableGst && mi === 0 && <td rowSpan={rows.length} className="p-1.5 text-gray-600 text-[12px] align-top">{item.hsn || '-'}</td>}
+                  {mi === 0 && <td rowSpan={rows.length} className="p-1.5 text-gray-800 text-[13px] align-top">{item.description || '-'}
                     <span className="block text-[11px] text-blue-700 font-medium mt-0.5">Total: {formatTotalArea(item)}</span>
                   </td>}
                   <td className="p-1.5">
@@ -102,11 +103,11 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcS
                     <span className="block text-[11px] text-gray-500">{measurementRowAreaInPricing(m, item.areaUnit).toFixed(2)} {areaUnitLabel(item.areaUnit)}</span>
                   </td>
                   <td className="p-1.5 text-gray-800 text-center text-[13px]">{m.quantity}</td>
-                  <td className="p-1.5 text-gray-800 text-right text-[13px]">₹{item.rate.toFixed(2)}/{areaUnitLabel(item.areaUnit)}</td>
+                  {mi === 0 && <td rowSpan={rows.length} className="p-1.5 text-gray-800 text-right align-top text-[13px]">₹{item.rate.toFixed(2)}/{areaUnitLabel(item.areaUnit)}</td>}
                   <td className="p-1.5 text-gray-800 text-right font-medium text-[13px]">₹{measurementRowAmount(item, m).toFixed(2)}</td>
                 </tr>
               ))
-            ) : (
+            })() : (
               <tr key={index} className="border-b border-gray-200">
                 <td className="p-1.5 text-gray-700 text-[13px]">{index + 1}</td>
                 {invoice.enableGst && <td className="p-1.5 text-gray-600 text-[12px]">{item.hsn || '-'}</td>}
