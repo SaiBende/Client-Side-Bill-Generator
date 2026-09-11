@@ -5,6 +5,8 @@ import { measurementRows, measurementItemAmount, measurementRowAreaInPricing, fo
 function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcSgst, numberToWords, logo, logoSettings }) {
   const logoStyle = logoSettings || { position: 'center', width: 80, height: 80 }
   const grandTotal = calcGrandTotal()
+  const advance = Number(invoice.advance) || 0
+  const balanceDue = Math.max(0, grandTotal - advance)
   const taxable = calcSubtotal()
   const cgst = calcCgst ? calcCgst() : 0
   const sgst = calcSgst ? calcSgst() : 0
@@ -153,11 +155,23 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcS
                 <span className="text-red-600">-₹{invoice.discount.toFixed(2)}</span>
               </div>
             )}
+            {advance > 0 && (
+              <div className="flex justify-between py-1 text-sm">
+                <span className="font-semibold text-gray-700">Advance Paid:</span>
+                <span className="text-green-700">-₹{advance.toFixed(2)}</span>
+              </div>
+            )}
             <hr className="border-t-2 border-gray-900 my-0.5" />
             <div className="flex justify-between py-1 text-base font-bold text-gray-900">
               <span>Grand Total:</span>
               <span>₹{grandTotal.toFixed(2)}</span>
             </div>
+            {advance > 0 && (
+              <div className="flex justify-between py-1 text-sm font-bold text-gray-900 border-t border-gray-400 pt-1">
+                <span>Balance Due:</span>
+                <span>₹{balanceDue.toFixed(2)}</span>
+              </div>
+            )}
           </div>
         </div>
 

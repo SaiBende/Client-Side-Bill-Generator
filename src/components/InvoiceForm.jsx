@@ -362,11 +362,22 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, ad
             <input type="number" min="0" value={invoice.discount} onChange={e => updateField('discount', Number(e.target.value))}
               className="w-28 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-right" />
           </div>
+          <div className="flex items-center justify-between text-sm mt-1">
+            <label className="font-medium text-gray-700">Advance Paid (₹):</label>
+            <input type="number" min="0" value={invoice.advance ?? 0} onChange={e => updateField('advance', Number(e.target.value))}
+              className="w-28 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-right" />
+          </div>
           <hr className="border-t border-gray-300 my-1.5" />
           <div className="flex items-center justify-between text-sm font-bold text-gray-900">
             <span>Grand Total:</span>
             <span>₹{(invoice.items.reduce((s, i) => s + (invoice.billType === 'measurement' ? measurementItemAmount(i) : i.quantity * i.rate), 0) - invoice.discount).toFixed(2)}</span>
           </div>
+          {(invoice.advance || 0) > 0 && (
+            <div className="flex items-center justify-between text-sm mt-1">
+              <span className="font-medium text-gray-700">Balance Due:</span>
+              <span className="font-bold text-gray-900">₹{(invoice.items.reduce((s, i) => s + (invoice.billType === 'measurement' ? measurementItemAmount(i) : i.quantity * i.rate), 0) - invoice.discount - (invoice.advance || 0)).toFixed(2)}</span>
+            </div>
+          )}
         </div>
       </Section>
 

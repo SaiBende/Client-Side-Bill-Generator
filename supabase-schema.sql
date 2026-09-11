@@ -28,6 +28,7 @@ CREATE TABLE invoices (
   invoice_date DATE NOT NULL,
   due_date DATE,
   discount NUMERIC(10, 2) DEFAULT 0,
+  advance NUMERIC(10, 2) DEFAULT 0,
   enable_gst BOOLEAN DEFAULT false,
   gstin TEXT DEFAULT '',
   grand_total NUMERIC(10, 2) DEFAULT 0,
