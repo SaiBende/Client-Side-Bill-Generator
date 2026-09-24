@@ -1,0 +1,18 @@
+# Dev/build junk that must not ship inside the app package
+node_modules/.cache
+node_modules/electron
+node_modules/electron-builder
+node_modules/electron-packager
+src
+public
+.env
+.gitignore
+.oxlintrc.json
+postcss.config.js
+tailwind.config.js
+vite.config.js
+index.html
+package-lock.json
+release
+supabase-*.sql
+rt_*
