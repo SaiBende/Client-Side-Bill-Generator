@@ -10,7 +10,11 @@ import InvoicePreview from './components/InvoicePreview'
 import BlankInvoicePreview from './components/BlankInvoicePreview'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-import { Download, Share2, IndianRupee, FileDown, Image, LogIn, LayoutDashboard, Plus, Home, ArrowLeft, Link } from 'lucide-react'
+import { Download, Share2, IndianRupee, FileDown, Image, LogIn, LayoutDashboard, Plus, Home, ArrowLeft, Link, HardDriveDownload, Database } from 'lucide-react'
+import { isDesktopMode } from './lib/desktop'
+import { desktopExportFile, desktopReveal } from './lib/desktopFiles'
+import BackupManager from './components/BackupManager'
+import BrandFooter from './components/BrandFooter'
 
 function generateInvoiceNumber() {
   const prefix = 'INV'
@@ -189,8 +193,8 @@ invoiceNumber: invoice.invoice_number,
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2">
           <IndianRupee className="w-5 h-5 text-blue-600" />
-          <h1 className="text-sm font-bold text-gray-800">Shared Invoice</h1>
-          <span className="ml-auto text-xs text-gray-400">View only</span>
+          <h1 className="text-sm font-bold text-gray-800">ShareMyBill</h1>
+          <span className="ml-auto text-xs text-gray-400">Shared invoice</span>
         </div>
       </header>
       <main className="max-w-3xl mx-auto p-4">
@@ -223,6 +227,7 @@ invoiceNumber: invoice.invoice_number,
           </div>
         )}
       </main>
+      <BrandFooter compact />
     </div>
   )
 }
@@ -244,6 +249,7 @@ function App() {
   const [logoSettings, setLogoSettings] = useState(getStoredLogoSettings)
 
   const [showAuth, setShowAuth] = useState(false)
+  const [showBackup, setShowBackup] = useState(false)
   const [toast, setToast] = useState(null)
   const pendingActionRef = useRef(null)
   const [autosaveState, setAutosaveState] = useState('idle')
@@ -272,8 +278,8 @@ function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       if (session) {
+        setView('dashboard')
         loadProfileDefaultsToInvoice(session.user.id)
-        restoreLatestInvoice(session.user.id)
       } else {
         applyBusinessDefaults(getBusinessDefaultsFromLocal())
       }
@@ -282,7 +288,9 @@ function App() {
       setSession(session)
       if (session) {
         loadProfileDefaultsToInvoice(session.user.id)
-        if (_event === 'SIGNED_IN') restoreLatestInvoice(session.user.id)
+        if (_event === 'SIGNED_IN') {
+          setView('dashboard')
+        }
       } else {
         setView('editor')
         setEditInvoiceId(null)
@@ -451,11 +459,6 @@ discount: data.discount || 0,
   async function loadInvoice(id) {
     const { data, error } = await supabase.from('invoices').select('*').eq('id', id).single()
     if (!error && data) loadInvoiceFromRow(data)
-  }
-
-  async function restoreLatestInvoice(userId) {
-    const { data } = await supabase.from('invoices').select('*').eq('user_id', userId).order('updated_at', { ascending: false }).limit(1)
-    if (data && data.length) loadInvoiceFromRow(data[0])
   }
 
   async function handleNewInvoice() {
@@ -710,7 +713,17 @@ discount: data.discount || 0,
         if (error) throw error
         const el = previewRef.current
         if (!el) return
-        await captureToPDF(el, `Invoice-${invoice.invoiceNumber}.pdf`)
+        if (isDesktopMode) {
+          const pdf = await captureToPDF(el, null)
+          const dataUrl = pdf.output('datauristring')
+          const res = await desktopExportFile(`Invoice-${invoice.invoiceNumber}.pdf`, dataUrl, { ask: true })
+          if (!res.canceled) {
+            setToast(res.error ? 'Save failed.' : `Saved: ${res.path}`)
+            setTimeout(() => setToast(null), 4000)
+          }
+        } else {
+          await captureToPDF(el, `Invoice-${invoice.invoiceNumber}.pdf`)
+        }
       } finally { setGenerating(false) }
     })
   }
@@ -723,12 +736,24 @@ discount: data.discount || 0,
         if (error) throw error
         const el = previewRef.current
         if (!el) return
-        const pdf = await captureToPDF(el)
+        const pdf = await captureToPDF(el, null)
         if (!pdf) return
+        if (isDesktopMode) {
+          const dataUrl = pdf.output('datauristring')
+          const res = await desktopExportFile(`Invoice-${invoice.invoiceNumber}.pdf`, dataUrl)
+          if (!res.canceled) {
+            if (res.error) setToast('Export failed.')
+            else { desktopReveal(res.path); setToast(`Exported: ${res.path}`) }
+            setTimeout(() => setToast(null), 4000)
+          }
+          return
+        }
         const pdfBlob = pdf.output('blob')
         const file = new File([pdfBlob], `Invoice-${invoice.invoiceNumber}.pdf`, { type: 'application/pdf' })
-        if (navigator.share && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: `Invoice ${invoice.invoiceNumber}` })
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: `Invoice ${invoice.invoiceNumber}` })
+          } catch { /* user closed the share panel */ }
         } else {
           const url = URL.createObjectURL(pdfBlob)
           window.open(url, '_blank')
@@ -764,9 +789,21 @@ discount: data.discount || 0,
         })
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
         if (!blob) return
+        if (isDesktopMode) {
+          const dataUrl = canvas.toDataURL('image/png')
+          const res = await desktopExportFile(`Invoice-${invoice.invoiceNumber}.png`, dataUrl)
+          if (!res.canceled) {
+            if (res.error) setToast('Export failed.')
+            else { desktopReveal(res.path); setToast(`Exported: ${res.path}`) }
+            setTimeout(() => setToast(null), 4000)
+          }
+          return
+        }
         const file = new File([blob], `Invoice-${invoice.invoiceNumber}.png`, { type: 'image/png' })
-        if (navigator.share && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: `Invoice ${invoice.invoiceNumber}` })
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: `Invoice ${invoice.invoiceNumber}` })
+          } catch { /* user closed the share panel */ }
         } else {
           const url = URL.createObjectURL(blob)
           window.open(url, '_blank')
@@ -783,7 +820,17 @@ discount: data.discount || 0,
       try {
         const el = blankPreviewRef.current
         if (!el) return
-        await captureToPDF(el, 'Blank-Invoice.pdf')
+        if (isDesktopMode) {
+          const pdf = await captureToPDF(el, null)
+          const dataUrl = pdf.output('datauristring')
+          const res = await desktopExportFile('Blank-Invoice.pdf', dataUrl, { ask: true })
+          if (!res.canceled) {
+            setToast(res.error ? 'Save failed.' : `Saved: ${res.path}`)
+            setTimeout(() => setToast(null), 4000)
+          }
+        } else {
+          await captureToPDF(el, 'Blank-Invoice.pdf')
+        }
       } finally { setGenerating(false) }
     })
   }
@@ -807,12 +854,24 @@ discount: data.discount || 0,
             )}
             <IndianRupee className="w-5 h-5 md:w-6 md:h-6 text-blue-600 shrink-0" />
             <h1 className="text-sm md:text-lg font-bold text-gray-800 truncate">
-              {editInvoiceId ? 'Edit Invoice' : 'Invoice Generator'}
+              ShareMyBill{editInvoiceId ? ' · Edit Invoice' : ''}
             </h1>
           </div>
 
           {/* Desktop nav */}
           <div className="hidden md:flex gap-2 items-center">
+            {isDesktopMode && (
+              <span className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-gray-500 bg-gray-100 rounded-full">
+                <Database className="w-3 h-3" /> Offline
+              </span>
+            )}
+            {isDesktopMode && (
+              <button onClick={() => setShowBackup(true)}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Backup & Restore"
+              ><HardDriveDownload className="w-4 h-4" /><span>Backup</span>
+              </button>
+            )}
             {session ? (
               <button onClick={openDashboard}
                 className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
@@ -957,7 +1016,10 @@ discount: data.discount || 0,
       </div>
 
       {/* ---- MODALS & TOASTS ---- */}
-      <AuthModal open={showAuth} onClose={() => { setShowAuth(false); pendingActionRef.current = null }} />
+      <AuthModal open={showAuth} onClose={() => { setShowAuth(false); pendingActionRef.current = null }} local={isDesktopMode} />
+      <BackupManager open={showBackup} onClose={() => setShowBackup(false)} />
+
+      <BrandFooter />
 
       {toast && (
         <div className="fixed top-4 right-4 z-50 bg-green-600 text-white px-4 py-2.5 md:px-5 md:py-3 rounded-lg shadow-lg text-xs md:text-sm font-medium animate-slide-in">
