@@ -52,6 +52,15 @@ const defaultInvoice = {
 }
 
 const BUSINESS_DEFAULTS_KEY = 'billing_business_defaults'
+const EDIT_CONTEXT_KEY = 'billing_edit_context'
+
+function saveEditContext(id) {
+  try {
+    if (id) localStorage.setItem(EDIT_CONTEXT_KEY, id)
+    else localStorage.removeItem(EDIT_CONTEXT_KEY)
+  } catch {
+  }
+}
 
 function getBusinessDefaultsFromLocal() {
   try {
@@ -252,11 +261,20 @@ function App() {
   const [showBackup, setShowBackup] = useState(false)
   const [toast, setToast] = useState(null)
   const pendingActionRef = useRef(null)
+  const editContextMountedRef = useRef(false)
   const [autosaveState, setAutosaveState] = useState('idle')
   const autosaveTimerRef = useRef(null)
   const autosaveSigRef = useRef(null)
   const saveInvoiceToDBRef = useRef(null)
   saveInvoiceToDBRef.current = saveInvoiceToDB
+
+  useEffect(() => {
+    if (!editContextMountedRef.current) {
+      editContextMountedRef.current = true
+      return
+    }
+    saveEditContext(editInvoiceId)
+  }, [editInvoiceId])
 
   useEffect(() => {
     const blockWheelOnNumber = (e) => {
@@ -278,7 +296,7 @@ function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       if (session) {
-        setView('dashboard')
+        restoreEditContextOrDashboard()
         loadProfileDefaultsToInvoice(session.user.id)
       } else {
         applyBusinessDefaults(getBusinessDefaultsFromLocal())
@@ -459,6 +477,21 @@ discount: data.discount || 0,
   async function loadInvoice(id) {
     const { data, error } = await supabase.from('invoices').select('*').eq('id', id).single()
     if (!error && data) loadInvoiceFromRow(data)
+  }
+
+  async function restoreEditContextOrDashboard() {
+    const contextId = localStorage.getItem(EDIT_CONTEXT_KEY)
+    if (!contextId) {
+      setView('dashboard')
+      return
+    }
+    const { data } = await supabase.from('invoices').select('id').eq('id', contextId).single()
+    if (data) {
+      loadInvoice(contextId)
+    } else {
+      saveEditContext(null)
+      setView('dashboard')
+    }
   }
 
   async function handleNewInvoice() {
