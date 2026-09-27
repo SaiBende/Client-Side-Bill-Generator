@@ -187,6 +187,18 @@ code { background: var(--violet-soft); padding: 0.1em 0.4em; border-radius: 6px;
 .steps h3 { margin: 0 0 0.4rem; color: var(--ink); }
 .steps p { margin: 0; font-size: 0.95rem; }
 
+/* Install guide */
+.install-steps { grid-template-columns: repeat(4, 1fr); }
+.install-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1.6rem; }
+.callout {
+  background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--violet);
+  border-radius: var(--radius); padding: 1.1rem 1.3rem;
+}
+.callout h3 { margin: 0 0 0.3rem; color: var(--ink); font-size: 1.05rem; }
+.callout p { margin: 0; font-size: 0.95rem; }
+.callout-data { border-left-color: #0ea5e9; }
+.center { text-align: center; }
+
 /* Tech band */
 .tech-band { text-align: center; }
 .tech-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.7rem; margin-top: 1.2rem; }
@@ -271,7 +283,7 @@ code { background: var(--violet-soft); padding: 0.1em 0.4em; border-radius: 6px;
   .chip-a { left: 4px; } .chip-b { right: 4px; }
 }
 @media (max-width: 560px) {
-  .feature-grid, .use-grid, .steps, .strip-grid, .footer-grid { grid-template-columns: 1fr; }
+  .feature-grid, .use-grid, .steps, .install-notes, .strip-grid, .footer-grid { grid-template-columns: 1fr; }
   .section { padding-block: 3.2rem; }
   .hero-actions .btn { width: 100%; }
   .hero-grid { padding-block: 3rem 2.5rem; }
