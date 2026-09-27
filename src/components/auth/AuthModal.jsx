@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Mail, Lock, Loader2, X } from 'lucide-react'
 
-export default function AuthModal({ open, onClose, local = false }) {
+export default function AuthModal({ open, onClose, local = false, onAuthInitiated }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,16 +16,19 @@ export default function AuthModal({ open, onClose, local = false }) {
     setLoading(true)
     setMessage('')
 
+    if (onAuthInitiated) onAuthInitiated(true)
     const res = isSignUp
       ? await supabase.auth.signUp({ email, password })
       : await supabase.auth.signInWithPassword({ email, password })
     const { error, data } = res
 
     if (error) {
+      if (onAuthInitiated) onAuthInitiated(false)
       setMessage(error.message)
     } else if (isSignUp && local && data?.session) {
       onClose()
     } else if (isSignUp) {
+      if (onAuthInitiated) onAuthInitiated(false)
       setMessage('Check your email for the confirmation link!')
     } else {
       onClose()
@@ -35,11 +38,15 @@ export default function AuthModal({ open, onClose, local = false }) {
 
   async function handleGoogleAuth() {
     setLoading(true)
+    try { localStorage.setItem('billing_auth_dash', '1') } catch { }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin },
     })
-    if (error) setMessage(error.message)
+    if (error) {
+      try { localStorage.removeItem('billing_auth_dash') } catch { }
+      setMessage(error.message)
+    }
     setLoading(false)
   }
 

@@ -270,6 +270,7 @@ function App() {
   const [showBackup, setShowBackup] = useState(false)
   const [toast, setToast] = useState(null)
   const pendingActionRef = useRef(null)
+  const authNavRef = useRef(false)
   const editContextMountedRef = useRef(false)
   const [autosaveState, setAutosaveState] = useState('idle')
   const autosaveTimerRef = useRef(null)
@@ -316,7 +317,12 @@ function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       if (session) {
-        restoreEditContextOrDashboard()
+        if (localStorage.getItem('billing_auth_dash')) {
+          localStorage.removeItem('billing_auth_dash')
+          setView('dashboard')
+        } else {
+          restoreEditContextOrDashboard()
+        }
         loadProfileDefaultsToInvoice(session.user.id)
       } else {
         applyBusinessDefaults(getBusinessDefaultsFromLocal())
@@ -326,7 +332,8 @@ function App() {
       setSession(session)
       if (session) {
         loadProfileDefaultsToInvoice(session.user.id)
-        if (_event === 'SIGNED_IN') {
+        if (_event === 'SIGNED_IN' && authNavRef.current) {
+          authNavRef.current = false
           setView('dashboard')
         }
       } else {
@@ -423,6 +430,10 @@ function App() {
       pendingActionRef.current = callback
       setShowAuth(true)
     }
+  }
+
+  function handleAuthInitiated(active) {
+    authNavRef.current = !!active
   }
 
   async function uploadLogo(file) {
@@ -1084,7 +1095,7 @@ discount: data.discount || 0,
       </div>
 
       {/* ---- MODALS & TOASTS ---- */}
-      <AuthModal open={showAuth} onClose={() => { setShowAuth(false); pendingActionRef.current = null }} local={isDesktopMode} />
+      <AuthModal open={showAuth} onClose={() => { setShowAuth(false); pendingActionRef.current = null; authNavRef.current = false }} local={isDesktopMode} onAuthInitiated={handleAuthInitiated} />
       <BackupManager open={showBackup} onClose={() => setShowBackup(false)} />
 
       <BrandFooter />
