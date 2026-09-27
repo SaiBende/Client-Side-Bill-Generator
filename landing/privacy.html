@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — ShareMyBill by Sai Bende</title>
+  <meta name="description" content="How ShareMyBill handles your data: local-first browser storage, optional Supabase cloud sync, offline SQLite on desktop — and why we never sell your information." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://sharemybill.vercel.app/privacy.html" />
+  <link rel="icon" type="image/x-icon" href="/logo.ico" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/logo.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Privacy Policy — ShareMyBill" />
+  <meta property="og:description" content="Local-first, no ads, no tracking, no selling your data." />
+  <meta property="og:url" content="https://sharemybill.vercel.app/privacy.html" />
+  <meta property="og:image" content="https://sharemybill.vercel.app/assets/images/og.png" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <script type="module" src="/assets/js/main.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="/" aria-label="ShareMyBill home">
+        <img class="brand-logo" src="/logo.png" alt="ShareMyBill logo" width="36" height="36" />
+        <span class="brand-name">ShareMyBill</span>
+      </a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="site-nav" id="primary-nav" aria-label="Primary">
+        <a href="/#features">Features</a>
+        <a href="/#web-app">Web App</a>
+        <a href="/#desktop-app">Desktop App</a>
+        <a href="/#faq">FAQ</a>
+        <a class="nav-cta" href="/app/">Open the App</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="container prose">
+      <p class="section-eyebrow">Privacy</p>
+      <h1>Privacy Policy</h1>
+      <p><em>Last updated: September 2026</em></p>
+
+      <h2>The short version</h2>
+      <p>ShareMyBill is built to keep your data with <strong>you</strong>. There are no ads, no analytics trackers, and your invoice data is never sold or shared with third parties.</p>
+
+      <h2>Web app data</h2>
+      <p>When you use the web app without signing in, everything — your business details, customer lists, drafts and generated invoices — is stored in your browser's local storage on your own device. Nothing is uploaded.</p>
+
+      <h2>Optional account (cloud sync)</h2>
+      <p>If you create a free account, your invoices sync to a secure <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">Supabase</a> database so you can access them across devices and share invoice links. We store only the information you enter in the app. Your password is never visible to us; sign-in is handled by Supabase authentication (email/password or Google).</p>
+
+      <h2>Desktop app data</h2>
+      <p>The Windows desktop app runs fully offline. All invoices and settings are stored in a local SQLite database in your Documents folder (<code>Documents\BillingApp</code>). Nothing leaves your computer. The desktop app has its own on-device sign-in system and needs no account.</p>
+
+      <h2>What we do not do</h2>
+      <ul>
+        <li>We do not display ads.</li>
+        <li>We do not use third-party analytics trackers.</li>
+        <li>We do not sell, rent or share your data.</li>
+        <li>We do not read your invoices for anything other than making the service work.</li>
+      </ul>
+
+      <h2>Cookies &amp; storage</h2>
+      <p>We use browser local storage and Supabase's session storage to keep you signed in. We do not use advertising cookies.</p>
+
+      <h2>Changes</h2>
+      <p>This policy may be updated as the app grows. Material changes will be noted here with a new date above.</p>
+
+      <h2>Contact</h2>
+      <p>ShareMyBill is developed by <a href="https://github.com/saibende" target="_blank" rel="noopener noreferrer">Sai Bende</a>. Reach out on GitHub for any privacy question.</p>
+
+      <a class="btn btn-primary" href="/">Back to homepage</a>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <p>&copy; <span data-year>2026</span> ShareMyBill by Sai Bende. Made with &hearts; in India.</p>
+      <p class="footer-note">Data stays with you. No ads, no tracking, no selling your information.</p>
+    </div>
+  </footer>
+</body>
+</html>

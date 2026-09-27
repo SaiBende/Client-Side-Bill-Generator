@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Primary SEO -->
+  <title>ShareMyBill — Free GST Invoice Generator for Indian Businesses | Web &amp; Windows Desktop App</title>
+  <meta name="description" content="Create, save and export GST invoices for free. Use the online web app in any browser or the fully offline Windows desktop app. GST 5%, 12%, 18% &amp; 28%, itemized billing, PDF export, autosave — made in India by Sai Bende." />
+  <meta name="keywords" content="GST invoice generator, free invoice maker, Indian invoice app, GST billing software, offline invoice app Windows, small business invoicing, Sai Bende, ShareMyBill" />
+  <meta name="author" content="Sai Bende" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="theme-color" content="#1e1b4b" />
+  <link rel="canonical" href="https://sharemybill.vercel.app/" />
+  <meta name="geo.region" content="IN" />
+
+  <!-- Favicon / icons -->
+  <link rel="icon" type="image/x-icon" href="/logo.ico" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ShareMyBill" />
+  <meta property="og:title" content="ShareMyBill — Free GST Invoice Generator (Web &amp; Desktop)" />
+  <meta property="og:description" content="Free Indian GST invoice generator. Web app in your browser or a fully offline Windows desktop app. PDF export, autosave, itemized billing. Made in India." />
+  <meta property="og:url" content="https://sharemybill.vercel.app/" />
+  <meta property="og:image" content="https://sharemybill.vercel.app/assets/images/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="en_IN" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ShareMyBill — Free GST Invoice Generator (Web &amp; Desktop)" />
+  <meta name="twitter:description" content="Free Indian GST invoice generator — browser web app or fully offline Windows desktop app. Made in India by Sai Bende." />
+  <meta name="twitter:image" content="https://sharemybill.vercel.app/assets/images/og.png" />
+
+  <!-- Performance -->
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <script type="module" src="/assets/js/main.js"></script>
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://sharemybill.vercel.app/#website",
+        "url": "https://sharemybill.vercel.app/",
+        "name": "ShareMyBill",
+        "description": "Free Indian GST invoice generator — web app and offline Windows desktop app.",
+        "inLanguage": "en-IN",
+        "publisher": { "@id": "https://github.com/saibende#org" }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://github.com/saibende#org",
+        "name": "Sai Bende",
+        "url": "https://github.com/saibende",
+        "logo": { "@type": "ImageObject", "url": "https://sharemybill.vercel.app/logo.png" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "ShareMyBill Desktop",
+        "alternateName": "ShareMyBill Windows App",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Windows 10, Windows 11",
+        "description": "Fully offline Windows invoice generator. GST billing, PDF export and local SQLite storage on your own computer.",
+        "url": "https://github.com/SaiBende/Client-Side-Bill-Generator/releases",
+        "downloadUrl": "https://github.com/SaiBende/Client-Side-Bill-Generator/releases",
+        "featureList": [
+          "GST invoices 5% 12% 18% 28%",
+          "Offline with local SQLite storage",
+          "PDF export",
+          "Autosave and draft recovery",
+          "Invoice share links"
+        ],
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+        "author": { "@id": "https://github.com/saibende#org" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "ShareMyBill Web App",
+        "alternateName": "ShareMyBill Online Invoice Maker",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any modern browser (Chrome, Edge, Firefox, Safari)",
+        "description": "Free online GST invoice generator. No install required — create and download invoices right in your browser.",
+        "url": "https://sharemybill.vercel.app/app",
+        "featureList": [
+          "No install or download needed",
+          "GST invoices 5% 12% 18% 28%",
+          "PDF export",
+          "Cloud save and share with an account",
+          "Autosave and draft recovery"
+        ],
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+        "author": { "@id": "https://github.com/saibende#org" }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" id="top">
+    <div class="container nav-wrap">
+      <a class="brand" href="/" aria-label="ShareMyBill home">
+        <img class="brand-logo" src="/logo.png" alt="ShareMyBill logo" width="36" height="36" />
+        <span class="brand-name">ShareMyBill</span>
+      </a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="site-nav" id="primary-nav" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#web-app">Web App</a>
+        <a href="#desktop-app">Desktop App</a>
+        <a href="#how">How it works</a>
+        <a href="#faq">FAQ</a>
+        <a class="nav-cta" href="/app/">Open the App</a>
+        <a class="nav-download" href="https://github.com/SaiBende/Client-Side-Bill-Generator/releases" target="_blank" rel="noopener noreferrer">Download for Windows</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Free forever &middot; No account needed &middot; Made in India</p>
+          <h1 id="hero-title">Indian GST invoices, made simple &mdash; in your browser or on your desktop.</h1>
+          <p class="hero-sub">ShareMyBill is a free invoice generator for Indian small businesses. Pick GST slabs, add items with quantities and units, and export a clean print-ready PDF. Works online in your browser, and fully offline on your Windows PC.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="/app/">Open the Web App</a>
+            <a class="btn btn-secondary" href="https://github.com/SaiBende/Client-Side-Bill-Generator/releases" target="_blank" rel="noopener noreferrer">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .8.1-.6.3-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>
+              Download for Windows
+            </a>
+          </div>
+          <ul class="hero-trust" aria-label="Key promises">
+            <li><span class="check" aria-hidden="true">&#10003;</span> GST 5% / 12% / 18% / 28%</li>
+            <li><span class="check" aria-hidden="true">&#10003;</span> PDF export</li>
+            <li><span class="check" aria-hidden="true">&#10003;</span> Autosave &amp; draft recovery</li>
+            <li><span class="check" aria-hidden="true">&#10003;</span> Your data stays yours</li>
+          </ul>
+        </div>
+        <div class="hero-visual" role="img" aria-label="Preview of a ShareMyBill GST invoice">
+          <div class="mock-invoice">
+            <div class="mock-top"><span class="mock-logo">S</span><span>My Retail Store</span></div>
+            <div class="mock-row"><span>Invoice #</span><em>SM-0001</em></div>
+            <div class="mock-line"></div>
+            <div class="mock-items">
+              <div class="mock-item"><span>Cotton T-shirt</span><em>2 x INR 499.00</em></div>
+              <div class="mock-item"><span>Custom mug</span><em>10 x INR 299.00</em></div>
+            </div>
+            <div class="mock-line"></div>
+            <div class="mock-total"><span>Subtotal</span><em>INR 3,968.00</em></div>
+            <div class="mock-gst"><span>CGST + SGST 5%</span><em>+ INR 99.20</em></div>
+            <div class="mock-linetwo"></div>
+            <div class="mock-grand"><span>Grand Total</span><strong>INR 4,067.20</strong></div>
+            <p class="mock-foot">Printable PDF &middot; Shareable link &middot; Autosaved</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust strip -->
+    <section class="trust-strip" aria-label="Highlights">
+      <div class="container strip-grid">
+        <div><strong>Free forever</strong><span>No pricing tiers, no trials</span></div>
+        <div><strong>Local-first</strong><span>Your data lives on your device</span></div>
+        <div><strong>Works offline</strong><span>No internet? No problem</span></div>
+        <div><strong>GST ready</strong><span>All four Indian GST slabs</span></div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section" id="features" aria-labelledby="features-title">
+      <div class="container">
+        <p class="section-eyebrow">Features</p>
+        <h2 class="section-title" id="features-title">Everything a small business needs to bill quickly</h2>
+        <p class="section-sub">The same feature set in both the web app and the Windows desktop app — pick the one that fits your day.</p>
+        <div class="feature-grid">
+          <article class="card">
+            <h3>Customisable GST invoices</h3>
+            <p>Choose GST 5%, 12%, 18% or 28% per invoice, include your GSTIN, and add your business logo for a professional look.</p>
+          </article>
+          <article class="card">
+            <h3>Itemized billing with units</h3>
+            <p>Add items line by line with quantity, price and measurement units like kg, pcs, boxes or your own custom unit.</p>
+          </article>
+          <article class="card">
+            <h3>Print-ready PDF export</h3>
+            <p>Download any invoice as a clean PDF with amount-in-words spelled out — ready to print or email to customers.</p>
+          </article>
+          <article class="card">
+            <h3>Autosave &amp; draft recovery</h3>
+            <p>Your work-in-progress invoice is saved as you type. Close a tab by accident? Pick up right where you left off.</p>
+          </article>
+          <article class="card">
+            <h3>Shareable invoice links</h3>
+            <p>Create a share link instead of an attachment and send one invoice to many people — handy for quotes and follow-ups.</p>
+          </article>
+          <article class="card">
+            <h3>Unlimited invoices</h3>
+            <p>No caps, no invoice counters, no upsells. Create as many invoices as your business needs.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Web app -->
+    <section class="section alt" id="web-app" aria-labelledby="web-title">
+      <div class="container split">
+        <div class="split-copy">
+          <p class="section-eyebrow">Web App</p>
+          <h2 class="section-title" id="web-title">Create invoices straight from your browser</h2>
+          <p>The web app runs on any modern browser — Chrome, Edge, Firefox or Safari. Nothing to install and nothing to update; it just works on any computer, phone or tablet.</p>
+          <ul class="ticks">
+            <li>Open the app and start billing in under a minute</li>
+            <li>Optional free account for cloud storage and sharing across devices</li>
+            <li>Autosaves drafts locally so you never lose work</li>
+            <li>Default business info + profile savings to skip retyping</li>
+          </ul>
+          <a class="btn btn-primary" href="/app/">Open the Web App</a>
+        </div>
+        <div class="split-visual">
+          <div class="browser-frame" aria-hidden="true">
+            <div class="browser-bar"><i></i><i></i><i></i><span>sharemybill.vercel.app/app</span></div>
+            <div class="mini-app">
+              <div class="mini-field topline"></div>
+              <div class="mini-field short"></div>
+              <div class="mini-field"></div>
+              <div class="mini-table"><div class="row"><span></span><span></span><span></span></div><div class="row"><span></span><span></span><span></span></div></div>
+              <div class="mini-cta"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Desktop app -->
+    <section class="section" id="desktop-app" aria-labelledby="desktop-title">
+      <div class="container split flip">
+        <div class="split-copy">
+          <p class="section-eyebrow">Desktop App for Windows</p>
+          <h2 class="section-title" id="desktop-title">Fully offline invoicing on your own PC</h2>
+          <p>Prefer a real application on your machine? The desktop app runs completely offline. All your invoices are stored in a local SQLite database in your own Documents folder — no cloud, no tracking, nothing leaves your PC unless you share a link.</p>
+          <ul class="ticks">
+            <li>100% offline — perfect for shops and workshops with patchy internet</li>
+            <li>Local SQLite database at <code>Documents\BillingApp</code></li>
+            <li>Same invoice editor, GST slabs, units and PDF export as the web app</li>
+            <li>Your own sign-in system running on-device</li>
+          </ul>
+          <a class="btn btn-secondary" href="https://github.com/SaiBende/Client-Side-Bill-Generator/releases" target="_blank" rel="noopener noreferrer">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 2v13l3.5-3.5 1.4 1.4L12 17.8l-4.9-4.9 1.4-1.4L12 15V2z"/><path d="M4 20v-4h2v4h12v-4h2v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>
+            Download setup file (Windows)
+          </a>
+          <p class="small-note">Also available directly from the <a href="https://github.com/SaiBende/Client-Side-Bill-Generator/releases" target="_blank" rel="noopener noreferrer">GitHub releases</a> page.</p>
+        </div>
+        <div class="split-visual">
+          <div class="window-frame" aria-hidden="true">
+            <div class="window-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span>ShareMyBill</span></div>
+            <div class="mini-app dark">
+              <div class="mini-side"></div>
+              <div class="mini-main">
+                <div class="mini-field short"></div>
+                <div class="mini-field"></div>
+                <div class="mini-table"><div class="row"><span></span><span></span><span></span></div></div>
+                <div class="mini-cta"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section alt" id="how" aria-labelledby="how-title">
+      <div class="container">
+        <p class="section-eyebrow">How it works</p>
+        <h2 class="section-title" id="how-title">From zero to first invoice in three steps</h2>
+        <ol class="steps">
+          <li><span class="step-num">1</span><h3>Open the app</h3><p>Load the web app in your browser or install the Windows desktop app. No sign-up required to start.</p></li>
+          <li><span class="step-num">2</span><h3>Fill the invoice</h3><p>Add your business details and logo, the customer, line items, quantities, units and the GST slab.</p></li>
+          <li><span class="step-num">3</span><h3>Export or share</h3><p>Download a print-ready PDF, copy a share link, or come back later — your draft is autosaved.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <div class="container narrow">
+        <p class="section-eyebrow">FAQ</p>
+        <h2 class="section-title" id="faq-title">Common questions</h2>
+        <details class="faq">
+          <summary>Is ShareMyBill really free?</summary>
+          <p>Yes. Both the web app and the desktop app are free forever — no plans, no trials, no invoice limits.</p>
+        </details>
+        <details class="faq">
+          <summary>Do I need an account to create invoices?</summary>
+          <p>No. You can create and export invoices without any account. An optional free account adds cloud storage and sharing between devices.</p>
+        </details>
+        <details class="faq">
+          <summary>Where is my data stored?</summary>
+          <p>On the web, drafts and data you don't sync stay in your own browser. If you sign in, your invoices sync to a secure Supabase database, which the desktop app lets you avoid entirely by storing everything in a local SQLite file in your Documents folder.</p>
+        </details>
+        <details class="faq">
+          <summary>What's the difference between the web app and the desktop app?</summary>
+          <p>The web app runs in your browser with optional cloud sync. The Windows desktop app runs fully offline and keeps all data on your own computer. Both share the same invoice editor, GST slabs and PDF export.</p>
+        </details>
+        <details class="faq">
+          <summary>Does it support GST and Indian formats?</summary>
+          <p>Yes — GST 5%, 12%, 18% and 28%, CGST/SGST split, amount-in-words in Indian numbering (lakh/crore) and a GSTIN-friendly invoice layout.</p>
+        </details>
+        <details class="faq">
+          <summary>Can I add my logo and business details?</summary>
+          <p>Yes. Add your logo image and save your business defaults, so every new invoice already has your brand on it.</p>
+        </details>
+        <details class="faq">
+          <summary>How do I contact the developer?</summary>
+          <p>ShareMyBill is built by <a href="https://github.com/saibende" target="_blank" rel="noopener noreferrer">Sai Bende</a>. Reach out via GitHub, or see the project at <a href="https://github.com/SaiBende/Client-Side-Bill-Generator" target="_blank" rel="noopener noreferrer">Client-Side-Bill-Generator</a>.</p>
+        </details>
+
+        <div class="faq-cta">
+          <h2>Ready to bill your first customer?</h2>
+          <a class="btn btn-primary" href="/app/">Open the Web App</a>
+          <a class="btn btn-secondary" href="https://github.com/SaiBende/Client-Side-Bill-Generator/releases" target="_blank" rel="noopener noreferrer">Get the Desktop App</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <img class="brand-logo" src="/logo.png" alt="ShareMyBill logo" width="32" height="32" />
+        <p class="footer-tag">Free GST invoice generator for Indian small businesses. Web &amp; Windows desktop.</p>
+      </div>
+      <nav class="footer-col" aria-label="Product">
+        <h3>Product</h3>
+        <a href="/app/">Web App</a>
+        <a href="#desktop-app">Desktop App for Windows</a>
+        <a href="https://github.com/SaiBende/Client-Side-Bill-Generator/releases" target="_blank" rel="noopener noreferrer">Download</a>
+        <a href="https://github.com/SaiBende/Client-Side-Bill-Generator" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+      <nav class="footer-col" aria-label="Resources">
+        <h3>Resources</h3>
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#faq">FAQ</a>
+        <a href="/privacy.html">Privacy</a>
+      </nav>
+      <nav class="footer-col" aria-label="About">
+        <h3>Made by</h3>
+        <a href="https://github.com/saibende" target="_blank" rel="noopener noreferrer">Sai Bende</a>
+        <a href="https://saibende.vercel.app" target="_blank" rel="noopener noreferrer">Portfolio</a>
+      </nav>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span data-year>2026</span> ShareMyBill by Sai Bende. Made with &hearts; in India.</p>
+      <p class="footer-note">Data stays with you. No ads, no tracking, no selling your information.</p>
+    </div>
+  </footer>
+</body>
+</html>

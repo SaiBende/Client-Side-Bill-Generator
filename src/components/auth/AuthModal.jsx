@@ -41,7 +41,7 @@ export default function AuthModal({ open, onClose, local = false, onAuthInitiate
     try { localStorage.setItem('billing_auth_dash', '1') } catch { }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: window.location.origin + window.location.pathname },
     })
     if (error) {
       try { localStorage.removeItem('billing_auth_dash') } catch { }

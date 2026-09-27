@@ -729,7 +729,7 @@ discount: data.discount || 0,
 
   function copyShareLink() {
     if (!shareToken) return
-    const url = `${window.location.origin}?share=${shareToken}`
+    const url = `${window.location.origin}${isDesktopMode ? '' : '/app'}?share=${shareToken}`
     navigator.clipboard.writeText(url).then(() => {
       setToast('Share link copied!')
       setTimeout(() => setToast(null), 3000)
@@ -1043,7 +1043,7 @@ discount: data.discount || 0,
           onEditInvoice={loadInvoice}
           onToast={(msg) => { setToast(msg); setTimeout(() => setToast(null), 3000) }}
           onCopyLink={(token) => {
-            const url = `${window.location.origin}?share=${token}`
+            const url = `${window.location.origin}${isDesktopMode ? '' : '/app'}?share=${token}`
             navigator.clipboard.writeText(url).then(() => {
               setToast('Share link copied!')
               setTimeout(() => setToast(null), 3000)
