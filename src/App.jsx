@@ -53,11 +53,20 @@ const defaultInvoice = {
 
 const BUSINESS_DEFAULTS_KEY = 'billing_business_defaults'
 const EDIT_CONTEXT_KEY = 'billing_edit_context'
+const DRAFT_KEY = 'billing_draft'
 
 function saveEditContext(id) {
   try {
     if (id) localStorage.setItem(EDIT_CONTEXT_KEY, id)
     else localStorage.removeItem(EDIT_CONTEXT_KEY)
+  } catch {
+  }
+}
+
+function saveDraft(draft) {
+  try {
+    if (draft) localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+    else localStorage.removeItem(DRAFT_KEY)
   } catch {
   }
 }
@@ -277,6 +286,17 @@ function App() {
   }, [editInvoiceId])
 
   useEffect(() => {
+    const hasContent = !!(invoice.customerName?.trim() || invoice.businessName?.trim() || invoice.customerAddress?.trim() || invoice.items?.some(i =>
+      (i.description || '').trim() || Number(i.rate) > 0 || (i.measurements || []).some(m => Number(m.width) > 0 || Number(m.height) > 0)
+    ))
+    if (view !== 'editor' || !hasContent) return
+    const t = setTimeout(() => {
+      saveDraft({ invoice, editInvoiceId, savedAt: Date.now() })
+    }, 400)
+    return () => clearTimeout(t)
+  }, [invoice, view, editInvoiceId])
+
+  useEffect(() => {
     const blockWheelOnNumber = (e) => {
       const el = e.target
       if (el && el.tagName === 'INPUT' && el.type === 'number' && document.activeElement === el) {
@@ -481,17 +501,29 @@ discount: data.discount || 0,
 
   async function restoreEditContextOrDashboard() {
     const contextId = localStorage.getItem(EDIT_CONTEXT_KEY)
-    if (!contextId) {
-      setView('dashboard')
-      return
-    }
-    const { data } = await supabase.from('invoices').select('id').eq('id', contextId).single()
-    if (data) {
-      loadInvoice(contextId)
-    } else {
+    if (contextId) {
+      const { data } = await supabase.from('invoices').select('id').eq('id', contextId).single()
+      if (data) {
+        loadInvoice(contextId)
+        return
+      }
       saveEditContext(null)
-      setView('dashboard')
     }
+    const draftRaw = localStorage.getItem(DRAFT_KEY)
+    if (draftRaw) {
+      try {
+        const draft = JSON.parse(draftRaw)
+        if (draft?.invoice) {
+          setInvoice(draft.invoice)
+          setEditInvoiceId(draft.editInvoiceId || null)
+          setView('editor')
+          setActiveTab('form')
+          return
+        }
+      } catch {
+      }
+    }
+    setView('dashboard')
   }
 
   async function handleNewInvoice() {
@@ -506,12 +538,14 @@ discount: data.discount || 0,
     setEditInvoiceId(null)
     setView('editor')
     setActiveTab('form')
+    saveDraft(null)
   }
 
   function openDashboard() {
     requireAuth(() => {
       setView('dashboard')
       setEditInvoiceId(null)
+      saveDraft(null)
     })
   }
 
@@ -520,6 +554,7 @@ discount: data.discount || 0,
       setView('dashboard')
     }
     setEditInvoiceId(null)
+    saveDraft(null)
   }
 
   function updateField(field, value) {
@@ -1023,7 +1058,7 @@ discount: data.discount || 0,
 
       {/* ---- MOBILE BOTTOM NAV ---- */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-200 flex items-center justify-around safe-area-bottom">
-        <button onClick={() => { if (session) { setView('dashboard'); setEditInvoiceId(null) } else { setShowAuth(true) } }}
+        <button onClick={() => { if (session) { setView('dashboard'); setEditInvoiceId(null); saveDraft(null) } else { setShowAuth(true) } }}
           className={`flex flex-col items-center gap-0.5 py-2 px-3 text-xs font-medium ${view === 'dashboard' ? 'text-blue-600' : 'text-gray-500'}`}
         ><Home className="w-5 h-5" /> Home</button>
         <button onClick={() => handleNewInvoice()}
