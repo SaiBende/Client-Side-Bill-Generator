@@ -15,6 +15,7 @@ import { isDesktopMode } from './lib/desktop'
 import { desktopExportFile, desktopReveal } from './lib/desktopFiles'
 import BackupManager from './components/BackupManager'
 import BrandFooter from './components/BrandFooter'
+import exportInvoiceDocx from './lib/exportDocx'
 
 function generateInvoiceNumber() {
   const prefix = 'INV'
@@ -807,6 +808,34 @@ discount: data.discount || 0,
     })
   }
 
+  function downloadDocx() {
+    requireAuth(async () => {
+      const { error } = await saveInvoiceToDB()
+      if (error) {
+        setToast('Save failed. Please try again.')
+        setTimeout(() => setToast(null), 3000)
+        return
+      }
+      try {
+        await exportInvoiceDocx(
+          invoice,
+          calcSubtotal,
+          calcGrandTotal,
+          calcCgst,
+          calcSgst,
+          numberToWords,
+          logo,
+          logoSettings
+        )
+        setToast('Word (.docx) downloaded')
+      } catch (e) {
+        console.error(e)
+        setToast('Word export failed')
+      }
+      setTimeout(() => setToast(null), 3000)
+    })
+  }
+
   function sharePDF() {
     requireAuth(async () => {
       const { error } = await saveInvoiceToDB()
@@ -971,9 +1000,9 @@ discount: data.discount || 0,
                   {autosaveState === 'saving' ? 'Saving…' : autosaveState === 'error' ? 'Save failed' : autosaveState === 'saved' ? 'Saved' : ''}
                 </span>
               )}
-              <button onClick={downloadPDF} disabled={generating}
+              <button onClick={downloadDocx} disabled={generating}
                 className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
-              ><Download className="w-4 h-4" /><span>{generating ? '...' : 'PDF'}</span></button>
+              ><FileDown className="w-4 h-4" /><span>Word</span></button>
               <button onClick={sharePDF} disabled={generating}
                 className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
               ><Share2 className="w-4 h-4" /><span>Share</span></button>
@@ -1013,9 +1042,9 @@ discount: data.discount || 0,
             )}
           </div>
           <div className="max-w-7xl mx-auto px-3 pb-2 flex gap-1.5 overflow-x-auto md:hidden scrollbar-none">
-            <button onClick={downloadPDF} disabled={generating}
+            <button onClick={downloadDocx} disabled={generating}
               className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors shrink-0"
-            ><Download className="w-3.5 h-3.5" /> PDF</button>
+            ><FileDown className="w-3.5 h-3.5" /> Word</button>
             <button onClick={sharePDF} disabled={generating}
               className="flex items-center gap-1 px-2.5 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 disabled:opacity-50 transition-colors shrink-0"
             ><Share2 className="w-3.5 h-3.5" /> Share</button>
