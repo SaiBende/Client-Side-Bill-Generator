@@ -16,7 +16,8 @@ import {
   createPageSize,
   convertMillimetersToTwip,
 } from 'docx'
-import { saveAs } from 'file-saver'
+import pkg from 'file-saver'
+const { saveAs } = pkg
 
 const toDataURL = (url) =>
   new Promise((resolve, reject) => {
