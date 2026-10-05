@@ -50,6 +50,7 @@ const defaultInvoice = {
   upiName: '',
   terms: '',
   signature: '',
+  status: 'pending',
 }
 
 const BUSINESS_DEFAULTS_KEY = 'billing_business_defaults'
@@ -491,6 +492,7 @@ discount: data.discount || 0,
       upiName: data.upi_name || '',
       terms: data.terms || '',
       signature: data.signature || '',
+      status: data.status || 'pending',
     }
     setInvoice(mapped)
     setEditInvoiceId(data.id)
@@ -666,7 +668,7 @@ discount: data.discount || 0,
       upi_name: invoice.upiName,
       terms: invoice.terms,
       signature: invoice.signature,
-      status: 'pending',
+      status: invoice.status || 'pending',
     }
     let error = null
     if (editInvoiceId) {
