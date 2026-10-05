@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { rowGrandTotal } from '../lib/calculations'
 import { FileText, Plus, Trash2, LogOut, IndianRupee, Check, Link } from 'lucide-react'
 
 const statusColors = {
@@ -90,11 +91,7 @@ export default function Dashboard({ user, onSignOut, onNewInvoice, onEditInvoice
   }
 
   function totalRevenue() {
-    return invoices.reduce((sum, inv) => {
-      const items = inv.items || []
-      const subtotal = items.reduce((s, i) => s + (i.quantity || 0) * (i.rate || 0), 0)
-      return sum + (subtotal - (inv.discount || 0))
-    }, 0)
+    return invoices.reduce((sum, inv) => sum + rowGrandTotal(inv), 0)
   }
 
   return (
@@ -160,7 +157,7 @@ export default function Dashboard({ user, onSignOut, onNewInvoice, onEditInvoice
                       <StatusBadge status={inv.status || 'pending'} invoiceId={inv.id} onUpdate={updateStatus} />
                     </div>
                     <p className="text-xs md:text-sm text-gray-500 truncate mt-0.5">
-                      {inv.customer_name || 'No customer'} — ₹{(inv.grand_total || 0).toFixed(2)}
+                      {inv.customer_name || 'No customer'} — ₹{rowGrandTotal(inv).toFixed(2)}
                     </p>
                     <p className="text-[10px] md:text-xs text-gray-400 mt-0.5">
                       {new Date(inv.created_at).toLocaleDateString()}

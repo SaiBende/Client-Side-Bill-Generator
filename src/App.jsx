@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import QRCode from 'qrcode'
 import { supabase } from './lib/supabase'
 import { getStoredLogo, getStoredLogoSettings, storeLogo, storeLogoSettings, clearStoredLogo, resizeLogo } from './lib/logo'
-import { measurementItemAmount } from './lib/measurements'
+import * as totals from './lib/calculations'
 import AuthModal from './components/auth/AuthModal'
 import Dashboard from './components/Dashboard'
 import InvoiceForm from './components/InvoiceForm'
@@ -126,23 +126,17 @@ function SharedInvoiceView({ token, onClose }) {
   }, [invoice])
 
   function calcSubtotal() {
-    if (!invoice?.items) return 0
-    if (invoice.bill_type === 'measurement') {
-      return invoice.items.reduce((sum, item) => sum + measurementItemAmount(item), 0)
-    }
-    return invoice.items.reduce((sum, item) => sum + (item.quantity || 0) * (item.rate || 0), 0)
+    return totals.calcSubtotal(invoice?.items, invoice?.bill_type)
   }
-  function calcTaxable() { return invoice?.enable_gst ? calcSubtotal() : 0 }
-  function calcGstRate() {
-    const rates = invoice?.items?.map(i => i.gstRate || 0) || [0]
-    return Math.max(...rates)
-  }
-  function calcCgst() { return invoice?.enable_gst ? calcTaxable() * calcGstRate() / 200 : 0 }
-  function calcSgst() { return calcCgst() }
+  function calcCgst() { return totals.calcCgst(invoice?.items, invoice?.bill_type, invoice?.enable_gst) }
+  function calcSgst() { return totals.calcSgst(invoice?.items, invoice?.bill_type, invoice?.enable_gst) }
   function calcGrandTotal() {
-    const taxable = calcSubtotal()
-    if (!invoice?.enable_gst) return taxable - (invoice?.discount || 0)
-    return taxable + calcCgst() + calcSgst() - (invoice?.discount || 0)
+    return totals.calcGrandTotal({
+      items: invoice?.items,
+      billType: invoice?.bill_type,
+      enableGst: invoice?.enable_gst,
+      discount: invoice?.discount,
+    })
   }
   function numberToWords(num) {
     if (num === 0) return 'Zero'
@@ -625,23 +619,19 @@ discount: data.discount || 0,
   }
 
   function calcSubtotal() {
-    if (invoice.billType === 'measurement') {
-      return invoice.items.reduce((sum, item) => sum + measurementItemAmount(item), 0)
-    }
-    return invoice.items.reduce((sum, item) => sum + item.quantity * item.rate, 0)
+    return totals.calcSubtotal(invoice.items, invoice.billType)
   }
 
-  function calcGstRate() {
-    return Math.max(...invoice.items.map(i => i.gstRate || 0))
-  }
-
-  function calcCgst() { return invoice.enableGst ? calcSubtotal() * calcGstRate() / 200 : 0 }
-  function calcSgst() { return calcCgst() }
+  function calcCgst() { return totals.calcCgst(invoice.items, invoice.billType, invoice.enableGst) }
+  function calcSgst() { return totals.calcSgst(invoice.items, invoice.billType, invoice.enableGst) }
 
   function calcGrandTotal() {
-    const taxable = calcSubtotal()
-    if (!invoice.enableGst) return taxable - invoice.discount
-    return taxable + calcCgst() + calcSgst() - invoice.discount
+    return totals.calcGrandTotal({
+      items: invoice.items,
+      billType: invoice.billType,
+      enableGst: invoice.enableGst,
+      discount: invoice.discount,
+    })
   }
 
   async function saveInvoiceToDB() {
@@ -1085,7 +1075,8 @@ discount: data.discount || 0,
             <div className={`w-full md:w-1/2 ${activeTab === 'preview' ? 'hidden md:block' : ''}`}>
               <InvoiceForm invoice={invoice} updateField={updateField} updateItem={updateItem} addItem={addItem} removeItem={removeItem} addItemMeasurement={addItemMeasurement}
               updateItemMeasurement={updateItemMeasurement}
-              removeItemMeasurement={removeItemMeasurement} logo={logo} logoSettings={logoSettings} onUploadLogo={uploadLogo} onRemoveLogo={removeLogo} onLogoSettingsChange={updateLogoSettings} />
+              removeItemMeasurement={removeItemMeasurement} logo={logo} logoSettings={logoSettings} onUploadLogo={uploadLogo} onRemoveLogo={removeLogo} onLogoSettingsChange={updateLogoSettings}
+              calcSubtotal={calcSubtotal} calcCgst={calcCgst} calcSgst={calcSgst} calcGrandTotal={calcGrandTotal} />
             </div>
             <div className={`w-full md:w-1/2 ${activeTab === 'form' ? 'hidden md:block' : ''}`}>
               <div className="md:sticky md:top-20">

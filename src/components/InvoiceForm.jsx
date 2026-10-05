@@ -83,7 +83,7 @@ function ResizableLogo({ logo, width, height, onChange, className = '' }) {
   )
 }
 
-function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, addItemMeasurement, updateItemMeasurement, removeItemMeasurement, logo, logoSettings, onUploadLogo, onRemoveLogo, onLogoSettingsChange }) {
+function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, addItemMeasurement, updateItemMeasurement, removeItemMeasurement, logo, logoSettings, onUploadLogo, onRemoveLogo, onLogoSettingsChange, calcSubtotal = () => 0, calcCgst = () => 0, calcSgst = () => 0, calcGrandTotal = () => 0 }) {
   const logoInputRef = useRef(null)
 
   return (
@@ -355,8 +355,24 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, ad
         <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 mt-3">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-gray-700">Subtotal:</span>
-            <span className="text-gray-800">₹{invoice.items.reduce((s, i) => s + (invoice.billType === 'measurement' ? measurementItemAmount(i) : i.quantity * i.rate), 0).toFixed(2)}</span>
+            <span className="text-gray-800">₹{calcSubtotal().toFixed(2)}</span>
           </div>
+          {invoice.enableGst && (
+            <>
+              <div className="flex items-center justify-between text-xs mt-1">
+                <span className="text-gray-600">Taxable Amount:</span>
+                <span className="text-gray-600">₹{calcSubtotal().toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs mt-0.5">
+                <span className="text-gray-600">CGST:</span>
+                <span className="text-gray-600">₹{calcCgst().toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs mt-0.5">
+                <span className="text-gray-600">SGST:</span>
+                <span className="text-gray-600">₹{calcSgst().toFixed(2)}</span>
+              </div>
+            </>
+          )}
           <div className="flex items-center justify-between text-sm mt-1">
             <label className="font-medium text-gray-700">Discount (₹):</label>
             <input type="number" min="0" value={invoice.discount} onChange={e => updateField('discount', Number(e.target.value))}
@@ -370,12 +386,12 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, ad
           <hr className="border-t border-gray-300 my-1.5" />
           <div className="flex items-center justify-between text-sm font-bold text-gray-900">
             <span>Grand Total:</span>
-            <span>₹{(invoice.items.reduce((s, i) => s + (invoice.billType === 'measurement' ? measurementItemAmount(i) : i.quantity * i.rate), 0) - invoice.discount).toFixed(2)}</span>
+            <span>₹{calcGrandTotal().toFixed(2)}</span>
           </div>
           {(invoice.advance || 0) > 0 && (
             <div className="flex items-center justify-between text-sm mt-1">
               <span className="font-medium text-gray-700">Balance Due:</span>
-              <span className="font-bold text-gray-900">₹{(invoice.items.reduce((s, i) => s + (invoice.billType === 'measurement' ? measurementItemAmount(i) : i.quantity * i.rate), 0) - invoice.discount - (invoice.advance || 0)).toFixed(2)}</span>
+              <span className="font-bold text-gray-900">₹{(calcGrandTotal() - (invoice.advance || 0)).toFixed(2)}</span>
             </div>
           )}
         </div>
