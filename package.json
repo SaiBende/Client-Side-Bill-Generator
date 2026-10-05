@@ -1,7 +1,7 @@
 {
   "name": "sharemybill",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ShareMyBill — free Indian business invoice generator with offline desktop app. Made by Sai Bende.",
   "author": "Sai Bende <https://github.com/saibende>",
   "homepage": "https://github.com/saibende",
