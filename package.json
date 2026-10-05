@@ -46,6 +46,7 @@
   "build": {
     "appId": "com.sharemybill.app",
     "productName": "ShareMyBill",
+    "artifactName": "ShareMyBill-Setup-${version}.exe",
     "files": [
       "dist/**/*",
       "electron/**/*",
