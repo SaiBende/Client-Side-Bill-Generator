@@ -181,13 +181,14 @@ as one box.
   calcGrandTotal={calcGrandTotal}
   calcCgst={calcCgst}
   calcSgst={calcSgst}
+  calcIgst={calcIgst}
   numberToWords={numberToWords}
   logo={logo}
   logoSettings={logoSettings}
 />
 ```
 ```js
-exportInvoiceDocx(invoice, calcSubtotal, calcGrandTotal, calcCgst, calcSgst,
+exportInvoiceDocx(invoice, calcSubtotal, calcGrandTotal, calcCgst, calcSgst, calcIgst,
                    numberToWords, logo, logoSettings)
 ```
 
@@ -202,6 +203,7 @@ function calcGrandTotal() {
     billType: invoice.billType,
     enableGst: invoice.enableGst,
     discount: invoice.discount,
+    taxType: invoice.taxType,
   })
 }
 ```
@@ -216,9 +218,11 @@ Rules:
 - **Change the tax/area formula in `calculations.js` only.** The signatures above are load-bearing.
 - Keep the add order `subtotal + cgst + sgst - discount`. Rewriting it as `cgst * 2` shifts
   some half-paisa boundaries by 0.01 through float rounding — verified bit-exact before, don't
-  assume it stays that way (07 §2b).
-- `InvoicePreview` tolerates missing `cgst`/`sgst` (`= 0` defaults) but should always receive
-  all five.
+  assume it stays that way (07 §2b). The inter-state branch returns
+  `subtotal + igst - discount` separately; the intra branch must keep its original
+  expression verbatim so legacy invoices stay bit-identical.
+- `InvoicePreview` tolerates missing `cgst`/`sgst`/`igst` (`= 0` defaults) but should always
+  receive all six.
 - ⚠ `numberToWords` is still **duplicated verbatim** in `App.jsx` (editor + `SharedInvoiceView`)
   and is the last piece of duplicated money-adjacent logic to consolidate.
 

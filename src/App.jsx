@@ -33,6 +33,7 @@ const defaultInvoice = {
   customerCity: '',
   customerState: '',
   customerPincode: '',
+  placeOfSupply: '',
   invoiceNumber: generateInvoiceNumber(),
   invoiceDate: new Date().toISOString().split('T')[0],
   dueDate: '',
@@ -40,6 +41,7 @@ const defaultInvoice = {
   advance: 0,
   enableGst: false,
   gstin: '',
+  taxType: 'intra',
   billType: 'normal',
   items: [{ description: '', quantity: 1, rate: 0, hsn: '', gstRate: 0, areaUnit: 'sqft', measurements: [{ width: '', height: '', unit: 'in', quantity: 1 }] }],
   bankName: '',
@@ -129,14 +131,16 @@ function SharedInvoiceView({ token, onClose }) {
   function calcSubtotal() {
     return totals.calcSubtotal(invoice?.items, invoice?.bill_type)
   }
-  function calcCgst() { return totals.calcCgst(invoice?.items, invoice?.bill_type, invoice?.enable_gst) }
-  function calcSgst() { return totals.calcSgst(invoice?.items, invoice?.bill_type, invoice?.enable_gst) }
+  function calcCgst() { return totals.calcCgst(invoice?.items, invoice?.bill_type, invoice?.enable_gst, invoice?.tax_type) }
+  function calcSgst() { return totals.calcSgst(invoice?.items, invoice?.bill_type, invoice?.enable_gst, invoice?.tax_type) }
+  function calcIgst() { return totals.calcIgst(invoice?.items, invoice?.bill_type, invoice?.enable_gst, invoice?.tax_type) }
   function calcGrandTotal() {
     return totals.calcGrandTotal({
       items: invoice?.items,
       billType: invoice?.bill_type,
       enableGst: invoice?.enable_gst,
       discount: invoice?.discount,
+      taxType: invoice?.tax_type,
     })
   }
   function numberToWords(num) {
@@ -177,6 +181,7 @@ function SharedInvoiceView({ token, onClose }) {
     customerCity: invoice.customer_city,
     customerState: invoice.customer_state,
     customerPincode: invoice.customer_pincode,
+    placeOfSupply: invoice.place_of_supply || '',
 invoiceNumber: invoice.invoice_number,
     invoiceDate: invoice.invoice_date,
     dueDate: invoice.due_date,
@@ -184,6 +189,7 @@ invoiceNumber: invoice.invoice_number,
     advance: invoice.advance || 0,
     enableGst: invoice.enable_gst,
     gstin: invoice.gstin || '',
+    taxType: invoice.tax_type || 'intra',
     billType: invoice.bill_type || 'normal',
     items: invoice.items,
     bankName: invoice.bank_name,
@@ -213,7 +219,7 @@ invoiceNumber: invoice.invoice_number,
       </header>
       <main className="max-w-3xl mx-auto p-4">
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <InvoicePreview invoice={formInvoice} calcSubtotal={calcSubtotal} calcGrandTotal={calcGrandTotal} calcCgst={calcCgst} calcSgst={calcSgst} numberToWords={numberToWords} />
+          <InvoicePreview invoice={formInvoice} calcSubtotal={calcSubtotal} calcGrandTotal={calcGrandTotal} calcCgst={calcCgst} calcSgst={calcSgst} calcIgst={calcIgst} numberToWords={numberToWords} />
         </div>
 
         {hasUPI && (
@@ -471,6 +477,7 @@ function App() {
       customerCity: data.customer_city || '',
       customerState: data.customer_state || '',
       customerPincode: data.customer_pincode || '',
+      placeOfSupply: data.place_of_supply || '',
       invoiceNumber: data.invoice_number,
       invoiceDate: data.invoice_date,
       dueDate: data.due_date || '',
@@ -478,6 +485,7 @@ discount: data.discount || 0,
         advance: Number(data.advance) || 0,
         enableGst: data.enable_gst || false,
       gstin: data.gstin || '',
+      taxType: data.tax_type || 'intra',
       billType: data.bill_type || 'normal',
       items: (data.items || [{ description: '', quantity: 1, rate: 0, hsn: '', gstRate: 0, areaUnit: 'sqft', measurements: [{ width: '', height: '', unit: 'in', quantity: 1 }] }]).map(item => ({
         ...item,
@@ -624,8 +632,9 @@ discount: data.discount || 0,
     return totals.calcSubtotal(invoice.items, invoice.billType)
   }
 
-  function calcCgst() { return totals.calcCgst(invoice.items, invoice.billType, invoice.enableGst) }
-  function calcSgst() { return totals.calcSgst(invoice.items, invoice.billType, invoice.enableGst) }
+  function calcCgst() { return totals.calcCgst(invoice.items, invoice.billType, invoice.enableGst, invoice.taxType) }
+  function calcSgst() { return totals.calcSgst(invoice.items, invoice.billType, invoice.enableGst, invoice.taxType) }
+  function calcIgst() { return totals.calcIgst(invoice.items, invoice.billType, invoice.enableGst, invoice.taxType) }
 
   function calcGrandTotal() {
     return totals.calcGrandTotal({
@@ -633,6 +642,7 @@ discount: data.discount || 0,
       billType: invoice.billType,
       enableGst: invoice.enableGst,
       discount: invoice.discount,
+      taxType: invoice.taxType,
     })
   }
 
@@ -650,13 +660,15 @@ discount: data.discount || 0,
       customer_city: invoice.customerCity,
       customer_state: invoice.customerState,
       customer_pincode: invoice.customerPincode,
+      place_of_supply: invoice.placeOfSupply || '',
       invoice_number: invoice.invoiceNumber,
       invoice_date: invoice.invoiceDate,
       due_date: invoice.dueDate || null,
       discount: invoice.discount,
       advance: invoice.advance,
-      enable_gst: invoice.enableGst,
+enable_gst: invoice.enableGst,
       gstin: invoice.gstin,
+      ...(invoice.enableGst ? { tax_type: invoice.taxType || 'intra', place_of_supply: invoice.placeOfSupply || '' } : {}),
       bill_type: invoice.billType,
       items: invoice.items,
       grand_total: grandTotal,
@@ -815,6 +827,7 @@ discount: data.discount || 0,
           calcGrandTotal,
           calcCgst,
           calcSgst,
+          calcIgst,
           numberToWords,
           logo,
           logoSettings
@@ -1089,11 +1102,11 @@ discount: data.discount || 0,
               <InvoiceForm invoice={invoice} updateField={updateField} updateItem={updateItem} addItem={addItem} removeItem={removeItem} addItemMeasurement={addItemMeasurement}
               updateItemMeasurement={updateItemMeasurement}
               removeItemMeasurement={removeItemMeasurement} logo={logo} logoSettings={logoSettings} onUploadLogo={uploadLogo} onRemoveLogo={removeLogo} onLogoSettingsChange={updateLogoSettings}
-              calcSubtotal={calcSubtotal} calcCgst={calcCgst} calcSgst={calcSgst} calcGrandTotal={calcGrandTotal} />
+              calcSubtotal={calcSubtotal} calcCgst={calcCgst} calcSgst={calcSgst} calcIgst={calcIgst} calcGrandTotal={calcGrandTotal} />
             </div>
             <div className={`w-full md:w-1/2 ${activeTab === 'form' ? 'hidden md:block' : ''}`}>
               <div className="md:sticky md:top-20">
-<InvoicePreview invoice={invoice} calcSubtotal={calcSubtotal} calcGrandTotal={calcGrandTotal} calcCgst={calcCgst} calcSgst={calcSgst} numberToWords={numberToWords} logo={logo} logoSettings={logoSettings} />
+<InvoicePreview invoice={invoice} calcSubtotal={calcSubtotal} calcGrandTotal={calcGrandTotal} calcCgst={calcCgst} calcSgst={calcSgst} calcIgst={calcIgst} numberToWords={numberToWords} logo={logo} logoSettings={logoSettings} />
               </div>
             </div>
           </div>
@@ -1121,7 +1134,7 @@ discount: data.discount || 0,
 
       {/* ---- HIDDEN CAPTURE ELEMENTS ---- */}
       <div ref={previewRef} data-capture="true" className="fixed -left-[9999px] top-0 w-[794px]">
-        <InvoicePreview invoice={invoice} calcSubtotal={calcSubtotal} calcGrandTotal={calcGrandTotal} calcCgst={calcCgst} calcSgst={calcSgst} numberToWords={numberToWords} logo={logo} logoSettings={logoSettings} />
+        <InvoicePreview invoice={invoice} calcSubtotal={calcSubtotal} calcGrandTotal={calcGrandTotal} calcCgst={calcCgst} calcSgst={calcSgst} calcIgst={calcIgst} numberToWords={numberToWords} logo={logo} logoSettings={logoSettings} />
       </div>
       <div ref={blankPreviewRef} data-capture="true" className="fixed -left-[9999px] top-0 w-[794px]">
         <BlankInvoicePreview businessName={invoice.businessName} businessAddress={invoice.businessAddress} businessPhone={invoice.businessPhone} businessEmail={invoice.businessEmail} logo={logo} logoSettings={logoSettings} />

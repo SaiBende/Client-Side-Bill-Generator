@@ -13,20 +13,30 @@ export function calcGstRate(items) {
   return rates.length ? Math.max(...rates) : 0
 }
 
-export function calcCgst(items, billType, enableGst) {
-  if (!enableGst) return 0
+export function isInterState(taxType) {
+  return taxType === 'inter'
+}
+
+export function calcIgst(items, billType, enableGst, taxType) {
+  if (!enableGst || !isInterState(taxType)) return 0
+  return (calcSubtotal(items, billType) * calcGstRate(items)) / 100
+}
+
+export function calcCgst(items, billType, enableGst, taxType) {
+  if (!enableGst || isInterState(taxType)) return 0
   return (calcSubtotal(items, billType) * calcGstRate(items)) / 200
 }
 
-export function calcSgst(items, billType, enableGst) {
-  return calcCgst(items, billType, enableGst)
+export function calcSgst(items, billType, enableGst, taxType) {
+  return calcCgst(items, billType, enableGst, taxType)
 }
 
-export function calcGrandTotal({ items, billType, enableGst, discount }) {
+export function calcGrandTotal({ items, billType, enableGst, discount, taxType }) {
   const subtotal = calcSubtotal(items, billType)
   if (!enableGst) return subtotal - (discount || 0)
-  const cgst = calcCgst(items, billType, enableGst)
-  return subtotal + cgst + calcSgst(items, billType, enableGst) - (discount || 0)
+  if (isInterState(taxType)) return subtotal + calcIgst(items, billType, enableGst, taxType) - (discount || 0)
+  const cgst = calcCgst(items, billType, enableGst, taxType)
+  return subtotal + cgst + calcSgst(items, billType, enableGst, taxType) - (discount || 0)
 }
 
 export function rowGrandTotal(row) {
@@ -37,5 +47,6 @@ export function rowGrandTotal(row) {
     billType: row?.bill_type,
     enableGst: row?.enable_gst,
     discount: row?.discount,
+    taxType: row?.tax_type,
   })
 }

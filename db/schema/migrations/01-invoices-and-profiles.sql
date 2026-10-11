@@ -22,6 +22,7 @@ CREATE TABLE invoices (
   customer_city TEXT DEFAULT '',
   customer_state TEXT DEFAULT '',
   customer_pincode TEXT DEFAULT '',
+  place_of_supply TEXT DEFAULT '',
 
   -- Invoice details
   invoice_number TEXT NOT NULL,
@@ -31,6 +32,7 @@ CREATE TABLE invoices (
   advance NUMERIC(10, 2) DEFAULT 0,
   enable_gst BOOLEAN DEFAULT false,
   gstin TEXT DEFAULT '',
+  tax_type TEXT DEFAULT 'intra' CHECK (tax_type IN ('intra', 'inter')),
   grand_total NUMERIC(10, 2) DEFAULT 0,
   bill_type TEXT DEFAULT 'normal' CHECK (bill_type IN ('normal', 'measurement')),
 

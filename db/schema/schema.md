@@ -25,6 +25,7 @@ reconstructed from `./migrations/*.sql` (the API does not expose them).
 | `customer_city` | `text` | ❌ | `''` |
 | `customer_state` | `text` | ❌ | `''` |
 | `customer_pincode` | `text` | ❌ | `''` |
+| `place_of_supply` | `text` | ✅ | `''` (migration 06) |
 | `invoice_number` | `text` | ✅ | |
 | `invoice_date` | `date` | ✅ | |
 | `due_date` | `date` | ❌ | |
@@ -32,6 +33,7 @@ reconstructed from `./migrations/*.sql` (the API does not expose them).
 | `advance` | `numeric(10,2)` | ✅ | `0` (added by migration 02) |
 | `enable_gst` | `boolean` | ❌ | `false` |
 | `gstin` | `text` | ❌ | `''` |
+| `tax_type` | `text` | ✅ | `'intra'`, CHECK `('intra','inter')` (migration 05) |
 | `grand_total` | `numeric(10,2)` | ❌ | `0` |
 | `bill_type` | `text` | ✅ | `'normal'`, CHECK `('normal','measurement')` (migration 03) |
 | `items` | `jsonb` | ❌ | `'[]'` |

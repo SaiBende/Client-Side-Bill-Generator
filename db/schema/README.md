@@ -15,6 +15,8 @@ Live schema snapshot of the Supabase project `tytmqdruzdzejwatqgya` (ShareMyBill
 | `migrations/02-advance-column.sql` | `invoices.advance` |
 | `migrations/03-measurement-bill-type.sql` | `invoices.bill_type` CHECK (`normal`/`measurement`) |
 | `migrations/04-rls-share-fix.sql` | Drops overly permissive policy; defines secure `get_shared_invoice` |
+| `migrations/05-tax-type.sql` | `invoices.tax_type` CHECK (`intra`/`inter`) — IGST vs CGST+SGST |
+| `migrations/06-place-of-supply.sql` | `invoices.place_of_supply` — GST place of supply (state) |
 
 ## How it was captured
 

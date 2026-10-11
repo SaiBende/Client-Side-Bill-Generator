@@ -7,11 +7,12 @@ business context.
 
 | Term | Meaning | In this codebase |
 |---|---|---|
-| **GST** | Goods and Services Tax — India's consumption tax | Invoice-level boolean `enableGst`. When on: reveals `gstin`, per-item HSN/SAC + `gstRate`, and adds CGST+SGST lines. |
+| **GST** | Goods and Services Tax — India's consumption tax | Invoice-level boolean `enableGst`. When on: reveals `gstin`, a `Tax Type` control (`intra`\|`inter`), a **Place of Supply** state dropdown, per-item HSN/SAC + `gstRate`, and adds either a CGST+SGST pair or a single IGST line. |
 | **GSTIN** | 15-character GST Identification Number | `invoice.gstin`, TEXT, shown only when `enableGst`. |
 | **CGST** | Central GST — the central-government half | `subtotal * gstRate / 200` (i.e. `gstRate/2`%). |
 | **SGST** | State GST — the state-government half | `subtotal * gstRate / 200`. Same half as CGST. |
-| **IGST** | Integrated GST — for inter-state supply | **Not implemented.** Only intra-state CGST+SGST is supported. |
+| **IGST** | Integrated GST — for inter-state supply | `subtotal * gstRate / 100` as a single line, when `invoice.taxType === 'inter'`. CGST and SGST then both return `0`. Picked manually via the `CGST + SGST` / `IGST` control in the form. |
+| **Place of Supply** | The state where the goods/services are deemed supplied — determines whether the sale is intra- or inter-state | `invoice.placeOfSupply` (state name), shown only when `enableGst`. Form uses the `STATES` dropdown; preview/export render it via `formatPlaceOfSupply` as `'Maharashtra (27)'`. Display-only — does **not** drive `taxType`, which stays manual. |
 | **HSN / SAC** | Harmonised System of Nomenclature (goods) / Services Accounting Code (services) — the tax classification code | `item.hsn`, free text. Renders as an `HSN` table column only when `enableGst`. Not validated. |
 | **Taxable value** | The base the tax is computed on | `taxable = subtotal`. **Not** reduced by the discount, even though Grand Total is. |
 | **Invoice number** | The human-facing sequential reference | `INV-####`, randomly generated, **not** collision-checked, no DB uniqueness constraint. |

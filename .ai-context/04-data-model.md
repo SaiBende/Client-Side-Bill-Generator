@@ -18,6 +18,8 @@ Client-side shape is **camelCase**; the DB is **snake_case**. Three mappers do t
   businessName: '', businessAddress: '', businessPhone: '', businessEmail: '',
   // customer
   customerName: '', customerAddress: '', customerCity: '', customerState: '', customerPincode: '',
+  // customer/tax
+  placeOfSupply: '',          // GST state name; rendered with its code e.g. 'Maharashtra (27)'
   // invoice meta
   invoiceNumber: '',          // auto-filled 'INV-####'
   invoiceDate: '',            // ISO 'YYYY-MM-DD'
@@ -28,6 +30,7 @@ Client-side shape is **camelCase**; the DB is **snake_case**. Three mappers do t
   advance: 0,                 // amount already paid
   enableGst: false,
   gstin: '',
+  taxType: 'intra',          // 'intra' (CGST+SGST) | 'inter' (IGST)
   // lines
   items: [ /* see §2 */ ],
   // payment
@@ -52,6 +55,7 @@ Client-side shape is **camelCase**; the DB is **snake_case**. Three mappers do t
 | `customerCity` | `customer_city` | TEXT | TEXT | |
 | `customerState` | `customer_state` | TEXT | TEXT | |
 | `customerPincode` | `customer_pincode` | TEXT | TEXT | |
+| `placeOfSupply` | `place_of_supply` | TEXT DEFAULT `''` | TEXT DEFAULT `''` | added by migration 06; state name from the `STATES` list in `src/lib/states.js`, shown only when `enableGst` |
 | `invoiceNumber` | `invoice_number` | TEXT NOT NULL | TEXT | |
 | `invoiceDate` | `invoice_date` | DATE NOT NULL | TEXT | ISO `YYYY-MM-DD` |
 | `dueDate` | `due_date` | DATE (null) | TEXT | saved as `|| null` |
@@ -59,6 +63,7 @@ Client-side shape is **camelCase**; the DB is **snake_case**. Three mappers do t
 | `advance` | `advance` | NUMERIC(10,2) | REAL | `NUMERIC_COLS`; added by migration 02 |
 | `enableGst` | `enable_gst` | BOOLEAN | INTEGER 0/1 | `BOOL_COLS`; `mapRow` back to boolean |
 | `gstin` | `gstin` | TEXT | TEXT | shown only when `enableGst` |
+| `taxType` | `tax_type` | TEXT CHECK `IN ('intra','inter')` DEFAULT `'intra'` | TEXT DEFAULT `'intra'` | added by migration 05; decides IGST vs CGST+SGST |
 | `billType` | `bill_type` | TEXT CHECK `IN ('normal','measurement')` | TEXT DEFAULT `'normal'` | added by migration 03 |
 | `items` | `items` | **JSONB** | TEXT (JSON string) | `JSON_COLS`; `mapRow` `JSON.parse`, fallback `[]` |
 | — | `grand_total` | NUMERIC(10,2) | REAL | server-side mirror; `NUMERIC_COLS` |
@@ -150,22 +155,37 @@ Consumers: `App.jsx` (only `measurementItemAmount`), `InvoiceForm.jsx` (5 import
 ## 4. Tax / GST math
 
 One toggle for the whole invoice (`enableGst`), a rate per item (`gstRate` ∈
-`{0, 5, 12, 18, 28}`), and the GSTIN at invoice level.
+`{0, 5, 12, 18, 28}`), the GSTIN at invoice level, and a tax type
+(`taxType` ∈ `{'intra', 'inter'}`) that decides the split.
 
 ```js
 gstRate    = Math.max(...items.map(i => i.gstRate || 0))   // ONE rate for the whole invoice
 taxable    = subtotal                                        // NOT discount-adjusted
-cgst       = subtotal * gstRate / 200
-sgst       = subtotal * gstRate / 200                        // i.e. gstRate/2 each
-grandTotal = subtotal + cgst + sgst - discount               // discount applied AFTER tax
+cgst       = taxType === 'inter' ? 0 : subtotal * gstRate / 200
+sgst       = taxType === 'inter' ? 0 : subtotal * gstRate / 200      // i.e. gstRate/2 each
+igst       = taxType === 'inter' ? subtotal * gstRate / 100  : 0     // full rate, one line
+grandTotal = taxType === 'inter' ? subtotal + igst - discount
+                                 : subtotal + cgst + sgst - discount   // discount AFTER tax
 balanceDue = Math.max(0, grandTotal - advance)               // advance is a PAYMENT
 subtotal   = Σ (billType === 'measurement' ? measurementItemAmount(item)
                                                  : item.quantity * item.rate)
 ```
 
+`taxType` defaults to `'intra'` everywhere, so rows predating migration 05 and any
+invoice that never sets it behave **bit-exactly** as before (verified over 20,000
+randomised invoices — see 07 §2b).
+
+`saveInvoiceToDB` omits `tax_type` and `place_of_supply` from the payload when
+`enableGst` is `false` (they're only meaningful on GST invoices), so non-GST invoices
+never touch those columns. `loadInvoiceFromRow` falls back to `'intra'` / `''` when the
+row has no such key.
+
 Consequences to keep in mind:
 - A 5% item next to an 18% item taxes the **entire** subtotal at 18%. This is intentional
   given the UI ("GST Rate" reads as an invoice-level rate) but is not per-line accounting.
+- `taxType` is **manual** — the form offers a `CGST + SGST` / `IGST` segmented control
+  whenever GST is on. It is not derived from business-vs-customer state, so the seller
+  must pick `IGST` for inter-state supply.
 - `taxable === subtotal`, so the Taxable line is not reduced by the discount even though
   Grand Total is.
 - `advance` never affects `grandTotal`. It only produces the extra **Balance Due** line, shown
@@ -178,8 +198,9 @@ Display order in the totals panel:
 ```
 Subtotal
   Taxable
-  CGST @ (gstRate/2)%
-  SGST @ (gstRate/2)%
+  CGST @ (gstRate/2)%      ┐ intra only
+  SGST @ (gstRate/2)%      ┘
+  IGST @ gstRate%          (instead of the two above when taxType === 'inter')
 Discount            (red, only if > 0)
 Advance Paid        (green, only if > 0)
 Grand Total

@@ -26,9 +26,12 @@ on desktop — no account needed to start (guest mode), no internet needed to ke
 - Live on-screen preview that matches the export pixel-for-pixel.
 
 ### Money / tax
-- Optional GST toggle → reveals GSTIN, HSN per item, and CGST/SGST split.
-- GST is split **50/50** into CGST + SGST and applied at a **single max rate across all items**
-  (not per line). Discount is applied *after* tax. See `04-data-model.md` for exact formulas.
+- Optional GST toggle → reveals GSTIN, a **Tax Type** control (`CGST + SGST` vs `IGST`),
+  HSN per item, and the tax split.
+- GST is applied at a **single max rate across all items** (not per line). Intra-state
+  (`taxType: 'intra'`) splits it **50/50** into CGST + SGST; inter-state
+  (`taxType: 'inter'`) bills it as one **IGST** line. Discount is applied *after* tax.
+  See `04-data-model.md` for exact formulas.
 
 ### Output
 | Output | How |

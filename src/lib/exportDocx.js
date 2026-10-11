@@ -27,6 +27,7 @@ import {
   unitLabel,
   areaUnitLabel,
 } from './measurements'
+import { formatPlaceOfSupply } from './states'
 
 const C = {
   gray900: '111827',
@@ -139,12 +140,14 @@ const INR = (v) => `₹${Number(v || 0).toFixed(2)}`
 
 const toCamelCaseKeys = (invoice) => invoice
 
-export async function exportInvoiceDocx(invoice, calcSubtotal, calcGrandTotal, calcCgst, calcSgst, numberToWords, logo, logoSettings) {
+export async function exportInvoiceDocx(invoice, calcSubtotal, calcGrandTotal, calcCgst, calcSgst, calcIgst, numberToWords, logo, logoSettings) {
   const inv = toCamelCaseKeys(invoice)
   const grandTotal = calcGrandTotal ? calcGrandTotal() : 0
   const subtotal = calcSubtotal ? calcSubtotal() : 0
   const cgst = calcCgst ? calcCgst() : 0
   const sgst = calcSgst ? calcSgst() : 0
+  const igst = calcIgst ? calcIgst() : 0
+  const isInterState = inv.taxType === 'inter'
   const items = inv.items || []
   const gstRate = Math.max(...items.map((i) => i.gstRate || 0))
   const advance = Number(inv.advance) || 0
@@ -230,6 +233,7 @@ const META_R_BORDERS = { ...boxBorders, left: noBorder }
                 p({ after: 40, children: [t(inv.customerName || 'Customer Name', { bold: true, color: C.gray800, size: F.base })] }),
                 ...(inv.customerAddress ? [p({ after: 0, children: [t(inv.customerAddress, { color: C.gray600, size: F.sm })] })] : []),
                 p({ children: [t([inv.customerCity, inv.customerState, inv.customerPincode].filter(Boolean).join(', '), { color: C.gray600, size: F.sm })] }),
+                ...(inv.enableGst && inv.placeOfSupply ? [p({ children: [t(`Place of Supply: ${formatPlaceOfSupply(inv.placeOfSupply)}`, { color: C.gray600, size: F.sm })] })] : []),
               ],
             }),
             cell({ width: 3, borders: noBorders, children: [p({})] }),
@@ -419,8 +423,12 @@ const META_R_BORDERS = { ...boxBorders, left: noBorder }
         ...(inv.enableGst
           ? [
               totalRow('Taxable Amount:', INR(subtotal), { color: C.gray600, labelColor: C.gray600, size: F.sm }),
-              totalRow(`CGST @ ${(gstRate / 2).toFixed(1)}%:`, INR(cgst), { color: C.gray600, labelColor: C.gray600, size: F.sm }),
-              totalRow(`SGST @ ${(gstRate / 2).toFixed(1)}%:`, INR(sgst), { color: C.gray600, labelColor: C.gray600, size: F.sm }),
+              ...(isInterState
+                ? [totalRow(`IGST @ ${gstRate.toFixed(1)}%:`, INR(igst), { color: C.gray600, labelColor: C.gray600, size: F.sm })]
+                : [
+                    totalRow(`CGST @ ${(gstRate / 2).toFixed(1)}%:`, INR(cgst), { color: C.gray600, labelColor: C.gray600, size: F.sm }),
+                    totalRow(`SGST @ ${(gstRate / 2).toFixed(1)}%:`, INR(sgst), { color: C.gray600, labelColor: C.gray600, size: F.sm }),
+                  ]),
             ]
           : []),
         ...(inv.discount > 0 ? [totalRow('Discount:', `-${INR(inv.discount)}`, { color: C.red600 })] : []),

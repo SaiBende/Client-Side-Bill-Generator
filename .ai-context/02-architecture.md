@@ -297,7 +297,7 @@ Atomic against torn writes, but O(database size) per save.
 ### Local schema
 | Table | PK | Notes |
 |---|---|---|
-| `invoices` | `id TEXT` | 30 whitelisted cols; `discount/advance/grand_total REAL`, `enable_gst INTEGER`, `items TEXT` (JSON string), `bill_type TEXT DEFAULT 'normal'` |
+| `invoices` | `id TEXT` | 32 whitelisted cols; `discount/advance/grand_total REAL`, `enable_gst INTEGER`, `items TEXT` (JSON string), `tax_type TEXT DEFAULT 'intra'`, `place_of_supply TEXT DEFAULT ''`, `bill_type TEXT DEFAULT 'normal'` |
 | `user_profiles` | `user_id TEXT` | 11 business/bank/upi/gstin TEXT cols + `updated_at` |
 | `users` | `id TEXT` | `email UNIQUE`, `name`, `password_salt`, `password_hash`, timestamps |
 | `sessions` | `token TEXT` | `user_id`, `created_at` — **no expiry, no cleanup** |

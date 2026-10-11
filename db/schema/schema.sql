@@ -4,7 +4,7 @@
 -- Snapshot date: 2026-09-30
 --
 -- LIVE confirmations (captured from PostgREST OpenAPI, see ./postgrest-openapi.json):
---   * Table invoices      -> 31 columns (matches migrations + advance + bill_type)
+--   * Table invoices      -> 35 columns (matches migrations + advance + bill_type + tax_type + place_of_supply)
 --   * Table user_profiles -> 13 columns
 --   * RPC get_shared_invoice(token uuid)
 --   * RPC rls_auto_enable()  (helper observed live; not present in repo migrations)
@@ -38,6 +38,7 @@ CREATE TABLE invoices (
   customer_city TEXT DEFAULT '',
   customer_state TEXT DEFAULT '',
   customer_pincode TEXT DEFAULT '',
+  place_of_supply TEXT DEFAULT '',
 
   -- Invoice details
   invoice_number TEXT NOT NULL,
@@ -47,6 +48,7 @@ CREATE TABLE invoices (
   advance NUMERIC(10, 2) DEFAULT 0 NOT NULL,
   enable_gst BOOLEAN DEFAULT false,
   gstin TEXT DEFAULT '',
+  tax_type TEXT DEFAULT 'intra' NOT NULL CHECK (tax_type IN ('intra', 'inter')),
   grand_total NUMERIC(10, 2) DEFAULT 0,
   bill_type TEXT DEFAULT 'normal' NOT NULL CHECK (bill_type IN ('normal', 'measurement')),
 

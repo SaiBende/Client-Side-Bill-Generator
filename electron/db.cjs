@@ -6,9 +6,9 @@ const initSqlJs = require('sql.js')
 
 const INVOICE_COLS = [
   'user_id', 'business_name', 'business_address', 'business_phone', 'business_email',
-  'customer_name', 'customer_address', 'customer_city', 'customer_state', 'customer_pincode',
+  'customer_name', 'customer_address', 'customer_city', 'customer_state', 'customer_pincode', 'place_of_supply',
   'invoice_number', 'invoice_date', 'due_date', 'discount', 'advance', 'enable_gst', 'gstin',
-  'bill_type', 'items', 'grand_total', 'bank_name', 'bank_account', 'bank_ifsc', 'bank_branch',
+  'tax_type', 'bill_type', 'items', 'grand_total', 'bank_name', 'bank_account', 'bank_ifsc', 'bank_branch',
   'upi_id', 'upi_name', 'terms', 'signature', 'share_token', 'status',
 ]
 
@@ -59,6 +59,7 @@ function migrate() {
       customer_city TEXT DEFAULT '',
       customer_state TEXT DEFAULT '',
       customer_pincode TEXT DEFAULT '',
+      place_of_supply TEXT DEFAULT '',
       invoice_number TEXT DEFAULT '',
       invoice_date TEXT DEFAULT '',
       due_date TEXT,
@@ -66,6 +67,7 @@ function migrate() {
       advance REAL DEFAULT 0,
       enable_gst INTEGER DEFAULT 0,
       gstin TEXT DEFAULT '',
+      tax_type TEXT DEFAULT 'intra',
       bill_type TEXT DEFAULT 'normal',
       items TEXT DEFAULT '[]',
       grand_total REAL DEFAULT 0,
@@ -127,6 +129,10 @@ function migrate() {
   db.run(`CREATE INDEX IF NOT EXISTS idx_invoices_user_updated ON invoices(user_id, updated_at)`)
   db.run(`CREATE INDEX IF NOT EXISTS idx_invoices_user_created ON invoices(user_id, created_at)`)
   db.run(`CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)`)
+  const invoiceInfo = db.exec('PRAGMA table_info(invoices)')
+  const invoiceCols = invoiceInfo.length ? invoiceInfo[0].values.map(v => v[1]) : []
+  if (!invoiceCols.includes('tax_type')) db.run(`ALTER TABLE invoices ADD COLUMN tax_type TEXT DEFAULT 'intra'`)
+  if (!invoiceCols.includes('place_of_supply')) db.run(`ALTER TABLE invoices ADD COLUMN place_of_supply TEXT DEFAULT ''`)
   db.exec(`INSERT OR REPLACE INTO meta (key, value) VALUES ('db_version', '1')`)
 }
 

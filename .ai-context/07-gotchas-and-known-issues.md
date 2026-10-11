@@ -59,8 +59,9 @@ The five calculators were duplicated verbatim in `App.jsx` (editor) and again in
 |---|---|---|
 | `calcSubtotal(items, billType)` | array + `'normal'`/`'measurement'` | measurement bills use `measurementItemAmount` |
 | `calcGstRate(items)` | array | guarded: empty array → `0`, never `-Infinity` |
-| `calcCgst` / `calcSgst(items, billType, enableGst)` | | `0` when GST is off; SGST always mirrors CGST |
-| `calcGrandTotal({ items, billType, enableGst, discount })` | object | single add order: `subtotal + cgst + sgst - discount` |
+| `calcCgst` / `calcSgst(items, billType, enableGst, taxType)` | | `0` when GST is off **or** `taxType === 'inter'`; SGST always mirrors CGST |
+| `calcIgst(items, billType, enableGst, taxType)` | | `0` unless `taxType === 'inter'`; then full `subtotal * gstRate / 100` |
+| `calcGrandTotal({ items, billType, enableGst, discount, taxType })` | object | intra: `subtotal + cgst + sgst - discount`; inter: `subtotal + igst - discount` |
 | `rowGrandTotal(row)` | snake_case DB row | stored `grand_total` first, recompute as fallback |
 
 `App.jsx` imports it as `import * as totals from './lib/calculations'` and keeps its original
@@ -72,6 +73,13 @@ The add order matters: the old code computed `subtotal + cgst + cgst - discount`
 refactor reproduces that exact association rather than `subtotal + (cgst * 2)`. Verified
 **bit-exact** (`===`) across 4,000 randomised invoices × 5 assertions — a `cgst * 2`
 rewrite shifts some half-paisa boundaries by 0.01 through float rounding.
+
+The intra/inter split (2026-10-06) preserved this: `taxType` defaults to `'intra'`
+everywhere, and the intra branch of `calcGrandTotal` still evaluates the *original*
+expression verbatim. Re-verified bit-exact (`===`) against the pre-split implementation
+across 20,000 randomised invoices × 4 tax-type spellings (`undefined` / `'intra'` / `null`
+/ omitted), plus zero `NaN`s. **If you touch `calcGrandTotal`, re-run that comparison —**
+the intra path must never drift, or every legacy invoice's recomputed total shifts.
 
 `numberToWords` is still duplicated and is the remaining copy to consolidate.
 

@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { Plus, Trash2, Building2, User, ClipboardList, Banknote, ScrollText, ImagePlus } from 'lucide-react'
 import { measurementItemAmount, formatTotalArea, measurementRows, measurementRowAreaInPricing, areaUnitLabel } from '../lib/measurements'
+import { STATES } from '../lib/states'
 
 function Section({ icon: Icon, title, children }) {
   return (
@@ -83,7 +84,7 @@ function ResizableLogo({ logo, width, height, onChange, className = '' }) {
   )
 }
 
-function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, addItemMeasurement, updateItemMeasurement, removeItemMeasurement, logo, logoSettings, onUploadLogo, onRemoveLogo, onLogoSettingsChange, calcSubtotal = () => 0, calcCgst = () => 0, calcSgst = () => 0, calcGrandTotal = () => 0 }) {
+function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, addItemMeasurement, updateItemMeasurement, removeItemMeasurement, logo, logoSettings, onUploadLogo, onRemoveLogo, onLogoSettingsChange, calcSubtotal = () => 0, calcCgst = () => 0, calcSgst = () => 0, calcIgst = () => 0, calcGrandTotal = () => 0 }) {
   const logoInputRef = useRef(null)
 
   return (
@@ -220,9 +221,32 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, ad
           </button>
         </div>
         {invoice.enableGst && (
-          <Field label="GSTIN">
-            <Input value={invoice.gstin} onChange={e => updateField('gstin', e.target.value)} placeholder="22AAAAA0000A1Z5" />
-          </Field>
+          <>
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+              <span className="text-sm font-medium text-gray-700">Tax Type</span>
+              <div className="flex bg-gray-100 rounded-lg p-0.5">
+                <button onClick={() => updateField('taxType', 'intra')}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${invoice.taxType !== 'inter' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                  CGST + SGST
+                </button>
+                <button onClick={() => updateField('taxType', 'inter')}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${invoice.taxType === 'inter' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                  IGST
+                </button>
+              </div>
+            </div>
+            <Field label="GSTIN">
+              <Input value={invoice.gstin} onChange={e => updateField('gstin', e.target.value)} placeholder="22AAAAA0000A1Z5" />
+            </Field>
+            <Field label="Place of Supply">
+              <select value={invoice.placeOfSupply || ''} onChange={e => updateField('placeOfSupply', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              >
+                <option value="">Select state</option>
+                {STATES.map(s => <option key={s.code} value={s.name}>{`${s.name} (${s.code})`}</option>)}
+              </select>
+            </Field>
+          </>
         )}
       </Section>
 
@@ -363,14 +387,23 @@ function InvoiceForm({ invoice, updateField, updateItem, addItem, removeItem, ad
                 <span className="text-gray-600">Taxable Amount:</span>
                 <span className="text-gray-600">₹{calcSubtotal().toFixed(2)}</span>
               </div>
-              <div className="flex items-center justify-between text-xs mt-0.5">
-                <span className="text-gray-600">CGST:</span>
-                <span className="text-gray-600">₹{calcCgst().toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs mt-0.5">
-                <span className="text-gray-600">SGST:</span>
-                <span className="text-gray-600">₹{calcSgst().toFixed(2)}</span>
-              </div>
+              {invoice.taxType === 'inter' ? (
+                <div className="flex items-center justify-between text-xs mt-0.5">
+                  <span className="text-gray-600">IGST:</span>
+                  <span className="text-gray-600">₹{calcIgst().toFixed(2)}</span>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between text-xs mt-0.5">
+                    <span className="text-gray-600">CGST:</span>
+                    <span className="text-gray-600">₹{calcCgst().toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs mt-0.5">
+                    <span className="text-gray-600">SGST:</span>
+                    <span className="text-gray-600">₹{calcSgst().toFixed(2)}</span>
+                  </div>
+                </>
+              )}
             </>
           )}
           <div className="flex items-center justify-between text-sm mt-1">

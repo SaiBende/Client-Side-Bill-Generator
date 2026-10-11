@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
 import { measurementRows, measurementItemAmount, measurementRowAreaInPricing, formatTotalArea, unitLabel, areaUnitLabel } from '../lib/measurements'
+import { formatPlaceOfSupply } from '../lib/states'
 
-function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcSgst, numberToWords, logo, logoSettings }) {
+function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcSgst, calcIgst, numberToWords, logo, logoSettings }) {
   const logoStyle = logoSettings || { position: 'center', width: 80, height: 80 }
   const grandTotal = calcGrandTotal()
   const advance = Number(invoice.advance) || 0
@@ -10,6 +11,8 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcS
   const taxable = calcSubtotal()
   const cgst = calcCgst ? calcCgst() : 0
   const sgst = calcSgst ? calcSgst() : 0
+  const igst = calcIgst ? calcIgst() : 0
+  const isInterState = invoice.taxType === 'inter'
   const gstRate = Math.max(...(invoice.items || []).map(i => i.gstRate || 0))
   const [qrDataUrl, setQrDataUrl] = useState(null)
 
@@ -46,6 +49,11 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcS
               {invoice.customerAddress && <>{invoice.customerAddress}<br /></>}
               {[invoice.customerCity, invoice.customerState, invoice.customerPincode].filter(Boolean).join(', ')}
             </p>
+            {invoice.enableGst && invoice.placeOfSupply && (
+              <p className="text-[13px] text-gray-700 mt-1 break-words">
+                <span className="font-semibold text-gray-800">Place of Supply:</span> {formatPlaceOfSupply(invoice.placeOfSupply)}
+              </p>
+            )}
           </div>
           <div className="border border-gray-300 p-2 rounded min-w-0 md:min-w-[190px]">
             <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[13px]">
@@ -139,14 +147,23 @@ function InvoicePreview({ invoice, calcSubtotal, calcGrandTotal, calcCgst, calcS
                   <span>Taxable Amount:</span>
                   <span>₹{taxable.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between py-0.5 text-[13px] text-gray-600">
-                  <span>CGST @ {(gstRate / 2).toFixed(1)}%:</span>
-                  <span>₹{cgst.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between py-0.5 text-[13px] text-gray-600">
-                  <span>SGST @ {(gstRate / 2).toFixed(1)}%:</span>
-                  <span>₹{sgst.toFixed(2)}</span>
-                </div>
+                {isInterState ? (
+                  <div className="flex justify-between py-0.5 text-[13px] text-gray-600">
+                    <span>IGST @ {gstRate.toFixed(1)}%:</span>
+                    <span>₹{igst.toFixed(2)}</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between py-0.5 text-[13px] text-gray-600">
+                      <span>CGST @ {(gstRate / 2).toFixed(1)}%:</span>
+                      <span>₹{cgst.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between py-0.5 text-[13px] text-gray-600">
+                      <span>SGST @ {(gstRate / 2).toFixed(1)}%:</span>
+                      <span>₹{sgst.toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
               </>
             )}
             {invoice.discount > 0 && (
