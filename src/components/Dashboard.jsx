@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { rowGrandTotal } from '../lib/calculations'
-import { FileText, Plus, Trash2, LogOut, IndianRupee, Check, Link } from 'lucide-react'
+import { FileText, Plus, Trash2, LogOut, IndianRupee, Check, Link, Search, ChevronLeft, ChevronRight, ArrowUpDown, X } from 'lucide-react'
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -55,9 +55,16 @@ export default function Dashboard({ user, onSignOut, onNewInvoice, onEditInvoice
   const [invoices, setInvoices] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('created_at')
+  const [sortDir, setSortDir] = useState('desc')
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(20)
 
   useEffect(() => {
     loadInvoices()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function loadInvoices() {
@@ -86,13 +93,43 @@ export default function Dashboard({ user, onSignOut, onNewInvoice, onEditInvoice
     setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, status } : inv))
   }
 
-  function totalInvoices() {
-    return invoices.length
+  // total stats computed inline from filtered list
+
+  const filteredInvoices = invoices.filter(inv => {
+    const term = searchTerm.toLowerCase()
+    if (term) {
+      const hay = [
+        inv.invoice_number || '',
+        inv.customer_name || '',
+        inv.customer_city || '',
+        inv.customer_state || '',
+        (inv.items || []).map(i => i.description).join(' '),
+      ].join(' ').toLowerCase()
+      if (!hay.includes(term)) return false
+    }
+    if (statusFilter !== 'all' && (inv.status || 'pending') !== statusFilter) return false
+    return true
+  })
+
+  function sortInvoices(list) {
+    const dir = sortDir === 'asc' ? 1 : -1
+    return [...list].sort((a, b) => {
+      let av, bv
+      if (sortBy === 'amount') { av = rowGrandTotal(a); bv = rowGrandTotal(b) }
+      else if (sortBy === 'customer') { av = (a.customer_name || '').toLowerCase(); bv = (b.customer_name || '').toLowerCase() }
+      else if (sortBy === 'invoice') { av = a.invoice_number || ''; bv = b.invoice_number || '' }
+      else if (sortBy === 'status') { av = a.status || 'pending'; bv = b.status || 'pending' }
+      else { av = a[sortBy] || a.created_at; bv = b[sortBy] || b.created_at }
+      if (av < bv) return -1 * dir
+      if (av > bv) return 1 * dir
+      return 0
+    })
   }
 
-  function totalRevenue() {
-    return invoices.reduce((sum, inv) => sum + rowGrandTotal(inv), 0)
-  }
+  const sorted = sortInvoices(filteredInvoices)
+  const totalPages = Math.max(1, Math.ceil(sorted.length / perPage))
+  const currentPage = Math.min(page, totalPages)
+  const paged = sorted.slice((currentPage - 1) * perPage, currentPage * perPage)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -122,33 +159,58 @@ export default function Dashboard({ user, onSignOut, onNewInvoice, onEditInvoice
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4">
             <p className="text-xs md:text-sm text-gray-500">Total Invoices</p>
-            <p className="text-xl md:text-2xl font-bold text-gray-900">{totalInvoices()}</p>
+            <p className="text-xl md:text-2xl font-bold text-gray-900">{filteredInvoices.length}</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4">
             <p className="text-xs md:text-sm text-gray-500">Total Revenue</p>
-            <p className="text-xl md:text-2xl font-bold text-green-600">₹{totalRevenue().toFixed(2)}</p>
+            <p className="text-xl md:text-2xl font-bold text-green-600">₹{filteredInvoices.reduce((sum, inv) => sum + rowGrandTotal(inv), 0).toFixed(2)}</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4">
             <p className="text-xs md:text-sm text-gray-500">Pending / Paid</p>
-            <p className="text-xl md:text-2xl font-bold text-gray-900">{invoices.filter(i => i.status === 'pending').length} / {invoices.filter(i => i.status === 'paid').length}</p>
+            <p className="text-xl md:text-2xl font-bold text-gray-900">{filteredInvoices.filter(i => (i.status || 'pending') === 'pending').length} / {filteredInvoices.filter(i => (i.status || 'pending') === 'paid').length}</p>
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="px-3 md:px-4 py-2.5 md:py-3 border-b border-gray-200 flex items-center justify-between">
+          <div className="px-3 md:px-4 py-2.5 md:py-3 border-b border-gray-200 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <h2 className="text-sm md:text-base font-semibold text-gray-800">Your Invoices</h2>
-            <span className="text-xs text-gray-400">{invoices.length} total</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setPage(1) }}
+                  placeholder="Search invoice, customer, item..."
+                  className="w-48 md:w-56 pl-7 pr-8 py-1.5 text-xs md:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                {searchTerm && (
+                  <button onClick={() => { setSearchTerm(''); setPage(1) }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
+                className="px-2 py-1.5 text-xs md:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <button onClick={() => { setSortBy('created_at'); setSortDir(sortDir === 'asc' ? 'desc' : 'asc'); setPage(1) }}
+                className="flex items-center gap-1 px-2 py-1.5 text-xs md:text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <ArrowUpDown className="w-3.5 h-3.5" />
+                Sort
+              </button>
+              <span className="text-xs text-gray-400">{filteredInvoices.length} of {invoices.length}</span>
+            </div>
           </div>
           {loading ? (
             <div className="p-8 text-center text-gray-400 text-sm">Loading...</div>
-          ) : invoices.length === 0 ? (
+          ) : filteredInvoices.length === 0 ? (
             <div className="p-8 text-center text-gray-400">
               <FileText className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No invoices yet. Create your first one!</p>
+              <p className="text-sm">{invoices.length === 0 ? 'No invoices yet. Create your first one!' : 'No invoices match your filters.'}</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {invoices.map(inv => (
+              {paged.map(inv => (
                 <div key={inv.id} onClick={() => onEditInvoice(inv.id)}
                   className="flex items-center justify-between p-3 md:p-4 hover:bg-gray-50 transition-colors cursor-pointer active:bg-gray-100">
                   <div className="flex-1 min-w-0 pr-2">
@@ -181,6 +243,33 @@ export default function Dashboard({ user, onSignOut, onNewInvoice, onEditInvoice
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+          {filteredInvoices.length > 0 && (
+            <div className="flex items-center justify-between px-3 md:px-4 py-2.5 border-t border-gray-200">
+              <div className="flex items-center gap-2">
+                <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
+                  className="px-2 py-1.5 text-xs md:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span className="text-xs text-gray-500 hidden md:inline">per page</span>
+              </div>
+              <div className="flex items-center gap-1 md:gap-2">
+                <button onClick={() => setPage(Math.max(1, page - 1))} disabled={currentPage === 1}
+                  className="flex items-center gap-1 px-2 py-1.5 text-xs md:text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                </button>
+                <span className="text-xs md:text-sm text-gray-600 px-1 md:px-2">
+                  {currentPage} / {totalPages}
+                </span>
+                <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={currentPage === totalPages}
+                  className="flex items-center gap-1 px-2 py-1.5 text-xs md:text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           )}
         </div>
